@@ -51,5 +51,4 @@ pyenv and nvm are never wiped because they hold installed versions.
 - `homebrew.onActivation.cleanup = "zap"` removes any Homebrew package not listed in `configuration.nix`.
 - Existing files in the way of a symlink are renamed to `*.backup`.
 - `cc` alias runs `claude --dangerously-skip-permissions`.
-- Splits and panes are handled by herdr (`Ctrl+B`, then `"` or `%`), not WezTerm.
 - First `nvim` launch clones plugins via lazy.nvim (needs network once).
