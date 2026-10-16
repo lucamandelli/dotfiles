@@ -41,6 +41,7 @@
     onActivation.autoUpdate = true;
     onActivation.extraFlags = [ "--force" ];
     casks = [
+      "1password-cli"
       "wezterm"
     ];
   };
