@@ -13,6 +13,7 @@ in
     neovim
     ripgrep   # LazyVim search
     fd        # LazyVim file picker
+    jq        # Claude statusline
     nerd-fonts.jetbrains-mono
   ] ++ lib.optionals stdenv.isDarwin [
     gh        # on Ubuntu it comes from GitHub's apt repo
@@ -68,6 +69,7 @@ in
   home.file.".config/starship.toml".source = link ".config/starship.toml";
   home.file.".config/herdr/config.toml".source = link ".config/herdr/config.toml";  # file only: the dir holds runtime state
   home.file.".claude/settings.json".source = link ".claude/settings.json";
+  home.file.".claude/statusline.sh".source = link ".claude/statusline.sh";
 
   # One source of truth for global agent rules.
   home.file.".claude/CLAUDE.md".source = link "AGENTS.md";

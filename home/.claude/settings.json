@@ -16,6 +16,10 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  },
   "outputStyle": "Concise",
   "modelSettings": {
     "claude-opus-5-5": {
