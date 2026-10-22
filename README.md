@@ -104,6 +104,18 @@ sudo ln -sfn ~/github/lucamandelli/dotfiles/etc/keyd/default.conf /etc/keyd/defa
 sudo systemctl restart keyd   # the CLI is keyd.rvaiya on Ubuntu, not keyd
 ```
 
+OpenWhispr (voice dictation). No apt repo, so the official .deb; it updates itself.
+Its postinst adds you to the `input` group and enables `ydotoold` so it can paste on Wayland.
+The CUDA 12 runtime libs enable its GPU transcription (the NVIDIA driver alone isn't enough):
+
+```sh
+gh release download -R OpenWhispr/openwhispr -p '*-linux-amd64.deb' -D /tmp
+sudo apt install -y /tmp/OpenWhispr-*-linux-amd64.deb libcudart12 libcublas12
+rm /tmp/OpenWhispr-*-linux-amd64.deb
+```
+
+Its GNOME shortcuts (F8 dictation, Ctrl+Shift+Space voice agent) are created by the app; `linux.nix` only lists them.
+
 Nix, then zsh as the login shell (run `chsh` in a real terminal, it asks for the password):
 
 ```sh

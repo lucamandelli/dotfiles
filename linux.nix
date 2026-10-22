@@ -44,7 +44,13 @@ in
       terminal = [ "<Super>Return" ];          # default terminal
       www = [ "<Shift><Super>Return" ];        # default browser
       home = [ "<Shift><Super>f" ];            # file manager
-      custom-keybindings = [ "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/herdr/" ];
+      # The openwhispr entries are written by the OpenWhispr app itself; only listed
+      # here so a switch doesn't drop them.
+      custom-keybindings = map (n: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/${n}/") [
+        "herdr"
+        "openwhispr"
+        "openwhispr-voice-agent"
+      ];
     };
     "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/herdr" = {
       name = "herdr";
