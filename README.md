@@ -30,6 +30,14 @@ mise install
 ```
 
 Needs Nix (Determinate installer) first, plus nix-darwin on the Mac.
+
+On Ubuntu, Super+C/V copy/paste needs keyd (system-wide, outside home-manager):
+
+```sh
+sudo apt install keyd
+sudo ln -sfn ~/github/lucamandelli/dotfiles/etc/keyd/default.conf /etc/keyd/default.conf
+sudo systemctl restart keyd   # the CLI is keyd.rvaiya on Ubuntu, not keyd
+```
 Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
 
 ## Notes

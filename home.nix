@@ -66,6 +66,7 @@ in
   home.file.".config/ghostty".source = link ".config/ghostty";
   home.file.".config/mise".source = link ".config/mise";
   home.file.".config/starship.toml".source = link ".config/starship.toml";
+  home.file.".config/herdr/config.toml".source = link ".config/herdr/config.toml";  # file only: the dir holds runtime state
   home.file.".claude/settings.json".source = link ".claude/settings.json";
 
   # One source of truth for global agent rules.

@@ -1,0 +1,12 @@
+onboarding = false
+
+[theme]
+name = "terminal"
+auto_switch = false
+
+[keys]
+prefix = "ctrl+space"
+previous_tab = "alt+left"
+next_tab = "alt+right"
+previous_workspace = "alt+up"
+next_workspace = "alt+down"
