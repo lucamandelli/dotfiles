@@ -116,6 +116,24 @@ rm /tmp/OpenWhispr-*-linux-amd64.deb
 
 Its GNOME shortcuts (F8 dictation, Ctrl+Shift+Space voice agent) are created by the app; `linux.nix` only lists them.
 
+Claude Desktop, from Anthropic's apt repo (key fingerprint `31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE`):
+
+```sh
+sudo curl -fsSLo /usr/share/keyrings/claude-desktop-archive-keyring.asc https://downloads.claude.ai/claude-desktop/key.asc
+gpg --show-keys /usr/share/keyrings/claude-desktop-archive-keyring.asc
+echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/claude-desktop-archive-keyring.asc] https://downloads.claude.ai/claude-desktop/apt/stable stable main" \
+  | sudo tee /etc/apt/sources.list.d/claude-desktop.list
+sudo apt update && sudo apt install -y claude-desktop
+sudo usermod -aG kvm "$USER"   # Cowork runs its VM through /dev/kvm and /dev/vhost-vsock
+```
+
+ChatGPT (with Codex). Like Chrome, its .deb registers OpenAI's repo for updates:
+
+```sh
+curl -fsSL https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb -o /tmp/chatgpt.deb
+sudo apt install -y /tmp/chatgpt.deb && rm /tmp/chatgpt.deb
+```
+
 Nix, then zsh as the login shell (run `chsh` in a real terminal, it asks for the password):
 
 ```sh
