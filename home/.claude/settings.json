@@ -20,6 +20,17 @@
     "type": "command",
     "command": "~/.claude/statusline.sh"
   },
+  "enabledPlugins": {
+    "agent-skills@addy-agent-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "addy-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "addyosmani/agent-skills"
+      }
+    }
+  },
   "outputStyle": "Concise",
   "modelSettings": {
     "claude-opus-5-5": {
