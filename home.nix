@@ -38,6 +38,7 @@ in
     '';
     shellAliases = {
       ccd = "claude --dangerously-skip-permissions";
+      ccr = "claude --resume";
     };
   };
 

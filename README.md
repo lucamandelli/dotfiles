@@ -148,7 +148,7 @@ Log out and back in afterwards: zsh, the docker group and the GNOME extensions o
 
 - `homebrew.onActivation.cleanup = "zap"` removes any Homebrew package not listed in `configuration.nix`, including its data.
 - Existing files in the way of a symlink are renamed to `*.backup`.
-- `ccd` alias runs `claude --dangerously-skip-permissions`.
+- `ccd` alias runs `claude --dangerously-skip-permissions`; `ccr` runs `claude --resume`.
 - Ubuntu: `~/.local/bin/sudo` wraps sudo so that without a terminal (coding agents) it runs `sudo -A`, and a zenity dialog shows the command and asks for the password.
 - herdr is installed once by the switch; `herdr update` keeps it current.
 - First `nvim` launch installs LazyVim plugins (needs network once).
