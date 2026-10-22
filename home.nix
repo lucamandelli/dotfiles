@@ -39,6 +39,14 @@ in
     };
   };
 
+  programs.git = {
+    enable = true;
+    settings.user = {
+      name = "Luca Mandelli";
+      email = "luca.part.mand@gmail.com";
+    };
+  };
+
   programs.starship.enable = true;
 
   # Node, Python, Bun and pi; versions live in home/.config/mise/config.toml.
