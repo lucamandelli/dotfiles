@@ -6,6 +6,4 @@ result-*
 # Home Manager adoption backups stay local
 *.backup
 
-# no-mistakes local validation state - never commit in this public repo
-.no-mistakes/
 *.swp
