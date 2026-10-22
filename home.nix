@@ -42,9 +42,14 @@ in
 
   programs.git = {
     enable = true;
-    settings.user = {
-      name = "Luca Mandelli";
-      email = "luca.part.mand@gmail.com";
+    settings = {
+      user = {
+        name = "Luca Mandelli";
+        email = "luca.part.mand@gmail.com";
+      };
+      init.defaultBranch = "main";
+      push.autoSetupRemote = true;  # first push needs no -u
+      pull.rebase = true;
     };
   };
 
