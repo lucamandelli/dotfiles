@@ -34,6 +34,7 @@ in
     };
     initContent = ''
       zstyle ':completion:*' menu select  # Tab opens a navigable menu
+      zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'  # smart case: lowercase matches both
     '';
     shellAliases = {
       ccd = "claude --dangerously-skip-permissions";
