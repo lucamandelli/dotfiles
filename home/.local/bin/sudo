@@ -1,0 +1,7 @@
+#!/bin/sh
+# Without a terminal (coding agents), ask for the password in a GUI dialog instead of failing.
+if ! { : </dev/tty; } 2>/dev/null && [ -n "${WAYLAND_DISPLAY:-$DISPLAY}" ]; then
+  export SUDO_ASKPASS="$HOME/.local/bin/sudo-askpass" SUDO_ASKPASS_CMD="$*"
+  exec /usr/bin/sudo -A "$@"
+fi
+exec /usr/bin/sudo "$@"

@@ -18,6 +18,10 @@ in
     <dead_acute> <C> : "Ç" Ccedilla
   '';
 
+  # sudo without a terminal (coding agents) asks for the password in a GUI dialog.
+  home.file.".local/bin/sudo".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.dotfiles/home/.local/bin/sudo";
+  home.file.".local/bin/sudo-askpass".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.dotfiles/home/.local/bin/sudo-askpass";
+
   # GNOME's "launch terminal" action goes through xdg-terminal-exec.
   xdg.configFile."xdg-terminals.list".text = ''
     com.mitchellh.ghostty.desktop

@@ -1,0 +1,6 @@
+#!/bin/sh
+# Shows the command being run, escaped for zenity's Pango markup.
+cmd=$(printf '%s' "$SUDO_ASKPASS_CMD" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+exec zenity --entry --hide-text --modal --title=sudo --text="Password to run:
+
+<tt>sudo $cmd</tt>"
