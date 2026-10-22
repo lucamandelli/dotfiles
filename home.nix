@@ -3,6 +3,14 @@
 let
   dotfiles = "${config.home.homeDirectory}/.dotfiles";
   link = path: config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/${path}";
+  # SSH keys live in 1Password ("GitHub SSH" in Personal); its agent serves them.
+  sshAgent = if pkgs.stdenv.isDarwin
+    then "\"~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock\""
+    else "~/.1password/agent.sock";
+  sshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMWTv2iGH+sPGHBLjMe/Bp/O7PD7puqqP/He3PCg9zYB";
+  sshSigner = if pkgs.stdenv.isDarwin
+    then "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+    else "/opt/1Password/op-ssh-sign";
 in
 
 {
@@ -52,8 +60,23 @@ in
       init.defaultBranch = "main";
       push.autoSetupRemote = true;  # first push needs no -u
       pull.rebase = true;
+      url."git@github.com:".insteadOf = "https://github.com/";  # GitHub always over SSH
+      gpg.ssh.allowedSignersFile = "${config.home.homeDirectory}/.ssh/allowed_signers";  # git log --show-signature
+    };
+    signing = {
+      format = "ssh";
+      key = sshKey;
+      signer = sshSigner;
+      signByDefault = true;
     };
   };
+
+  programs.ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+    settings."*".IdentityAgent = sshAgent;
+  };
+  home.file.".ssh/allowed_signers".text = "${config.programs.git.settings.user.email} ${sshKey}\n";
 
   programs.starship.enable = true;
 
