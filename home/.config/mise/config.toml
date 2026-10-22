@@ -1,0 +1,5 @@
+[tools]
+node = "lts"
+python = "latest"
+bun = "latest"
+"npm:@earendil-works/pi-coding-agent" = "latest"

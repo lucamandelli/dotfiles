@@ -30,11 +30,6 @@
     inherit user;
     autoMigrate = true;  # adopt the existing /usr/local Homebrew install
   };
-  # Tools installed via upstream install scripts; see install-tools.sh (Intel Mac workaround)
-  system.activationScripts.postActivation.text = ''
-    /bin/bash ${./install-tools.sh} ${user}
-  '';
-
   homebrew = {
     enable = true;
     onActivation.cleanup = "zap";  # remove anything not listed here
@@ -42,7 +37,7 @@
     onActivation.extraFlags = [ "--force" ];
     casks = [
       "1password-cli"
-      "wezterm"
+      "ghostty"
     ];
   };
 }

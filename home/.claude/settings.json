@@ -2,12 +2,6 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "skillOverrides": {
-    "orchestration": "off",
-    "context7-mcp": "off",
-    "computer-use": "off",
-    "find-skills": "off"
-  },
   "hooks": {
     "SessionStart": [
       {
@@ -15,51 +9,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '/Users/lucamandelli/.claude/hooks/herdr-agent-state.sh' session",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "gh-axi",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "chrome-devtools-axi",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "lavish-axi",
+            "command": "bash ~/.claude/hooks/herdr-agent-state.sh session",
             "timeout": 10
           }
         ]
       }
     ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline.sh"
-  },
-  "enabledPlugins": {
-    "superpowers@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "mattpocock-skills@claude-plugins-official": true
   },
   "outputStyle": "Concise",
   "modelSettings": {
@@ -72,6 +27,5 @@
   },
   "tui": "fullscreen",
   "autoMemoryEnabled": false,
-  "skipDangerousModePermissionPrompt": true,
-  "theme": "dark-ansi"
+  "skipDangerousModePermissionPrompt": true
 }
