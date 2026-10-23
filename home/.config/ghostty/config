@@ -3,4 +3,3 @@ theme = Catppuccin Mocha
 keybind = shift+insert=paste_from_clipboard
 mouse-hide-while-typing = true
 gtk-titlebar = false
-window-decoration = true
