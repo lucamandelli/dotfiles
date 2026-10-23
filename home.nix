@@ -92,6 +92,17 @@ in
     fi
   '';
 
+  # ~/.config/herdr used to link the whole dir; home-manager won't drop that link on its own
+  # and would write config.toml's link through it into the repo, a symlink loop.
+  home.activation.unlinkHerdrDir = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+    if [ -L "$HOME/.config/herdr" ]; then
+      run rm "$HOME/.config/herdr"
+      run mkdir -p "$HOME/.config/herdr"
+      run find "${dotfiles}/home/.config/herdr" -mindepth 1 -maxdepth 1 ! -name config.toml \
+        -exec mv {} "$HOME/.config/herdr/" \;
+    fi
+  '';
+
   # Edit-in-place: the real file stays in my repo, ~/.config just points at it.
   home.file.".config/nvim".source = link ".config/nvim";
   home.file.".config/ghostty".source = link ".config/ghostty";
