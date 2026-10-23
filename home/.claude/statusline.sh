@@ -6,11 +6,12 @@
 input=$(cat)
 
 # \x1f (non-whitespace) keeps empty fields in place, unlike tabs.
-IFS=$'\x1f' read -r model effort ctx five five_reset seven seven_reset dir < <(
+IFS=$'\x1f' read -r model effort ctx ctx_tokens five five_reset seven seven_reset dir < <(
   jq -r '[
     .model.display_name,
     .effort.level,
     .context_window.used_percentage,
+    (.context_window.current_usage | .input_tokens + .cache_creation_input_tokens + .cache_read_input_tokens),
     .rate_limits.five_hour.used_percentage,
     .rate_limits.five_hour.resets_at,
     .rate_limits.seven_day.used_percentage,
@@ -32,6 +33,16 @@ pct() {
   printf '%s%s%%%s' "$color" "$v" "$reset"
 }
 
+# Token count as compact string: 1234 -> 1.2k, 123456 -> 123k, 1234567 -> 1.2M.
+tok() {
+  awk -v n="$1" 'BEGIN {
+    if (n >= 1e6) printf "%.1fM", n / 1e6
+    else if (n >= 1e4) printf "%.0fk", n / 1e3
+    else if (n >= 1e3) printf "%.1fk", n / 1e3
+    else printf "%d", n
+  }'
+}
+
 # Epoch to local time. GNU date (Linux) takes @epoch; BSD date (macOS) takes -r epoch.
 at() {
   date -d "@$1" "+$2" 2>/dev/null || date -r "$1" "+$2"
@@ -39,7 +50,10 @@ at() {
 
 out=$model
 [ -n "$effort" ] && out+=" ${dim}·${reset} $effort"
-[ -n "$ctx" ] && out+="${sep}ctx $(pct "$ctx")"
+if [ -n "$ctx" ]; then
+  out+="${sep}ctx $(pct "$ctx")"
+  [ -n "$ctx_tokens" ] && out+=" ${dim}($(tok "$ctx_tokens"))${reset}"
+fi
 if [ -n "$five" ]; then
   out+="${sep}5h $(pct "$five")"
   [ -n "$five_reset" ] && out+=" ${dim}($(at "$five_reset" %H:%M))${reset}"
