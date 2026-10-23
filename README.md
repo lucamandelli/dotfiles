@@ -1,7 +1,6 @@
 # dotfiles
 
 My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
-Based on [kunchenguid/dotfiles](https://github.com/kunchenguid/dotfiles).
 
 ## What it sets up
 
