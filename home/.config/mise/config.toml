@@ -4,3 +4,7 @@ python = "latest"
 bun = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 uv = "latest"
+
+[env]
+# pi-claude-auth pins Claude Code 2.1.160; newer models need >= 2.1.280
+ANTHROPIC_CLI_VERSION = "2.1.280"

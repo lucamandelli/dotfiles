@@ -27,11 +27,7 @@ in
     gh        # on Ubuntu it comes from GitHub's apt repo
   ];
   fonts.fontconfig.enable = true;
-  home.sessionVariables = {
-    EDITOR = "nvim";
-    # pi-claude-auth pins Claude Code 2.1.160; newer models need >= 2.1.280
-    ANTHROPIC_CLI_VERSION = "2.1.280";
-  };
+  home.sessionVariables.EDITOR = "nvim";
   home.sessionPath = [ "$HOME/.local/bin" ];
 
   programs.zsh = {
