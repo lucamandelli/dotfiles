@@ -34,6 +34,7 @@
     enable = true;
     onActivation.cleanup = "zap";  # remove anything not listed here
     onActivation.autoUpdate = true;
+    onActivation.upgrade = true;  # upgrade everything listed here on each rebuild
     onActivation.extraFlags = [ "--force" ];
     casks = [
       "1password-cli"
