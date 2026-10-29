@@ -6,6 +6,7 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
 
 - Both: zsh (autosuggestions, syntax highlighting, menu completion, shared history), starship,
   neovim (LazyVim starter) with ripgrep and fd, mise (Node, Python, Bun, pi), herdr, grok, codex,
+  Hunk (live agent review) and tuicr (PR review),
   JetBrains Mono Nerd Font, Ghostty config, Claude settings (merged, not linked) and one shared `home/AGENTS.md`
 - Mac only: macOS defaults and Homebrew casks via `configuration.nix`
 - Ubuntu: GUI and system apps come from apt (Chrome, 1Password, Ghostty, zsh, Docker, keyd); GNOME shortcuts and clipboard history via `linux.nix`
@@ -17,6 +18,7 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
 - `home.nix` - shared user config and out-of-store symlinks
 - `linux.nix` - Ubuntu-only home-manager bits
 - `home/skills.nix` - global agent skills (see below)
+- `home/review-tools.nix` - shared Hunk and tuicr installation
 - `home/` - the real config files, symlinked into `~` (edit here, no rebuild needed)
 - `etc/` - system files outside `~` (keyd), linked by hand on Ubuntu
 - `rebuild.sh` - links the repo to `~/.dotfiles` and switches the right config for the OS
@@ -35,7 +37,7 @@ Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
 
 ## Global agent skills
 
-`home/skills.nix` links 12 skills from pinned flake inputs (`mattpocock-skills`, `addy-skills`, `cursor-plugins`, `flake = false`, locked in `flake.lock`) into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). The unmanaged `no-mistakes` skill and Claude's `synced/` dir sit alongside.
+`home/skills.nix` links 13 skills into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` from the Hunk input (refreshed on rebuild). The unmanaged `no-mistakes` skill and Claude's `synced/` dir sit alongside.
 
 - Add: put `name = "${src}/path/to/skill-dir";` in the `skills` set (name must match the skill's `name:` and not collide). Link the whole dir, so bundled files travel. Check the skill has no `../` references to repo-level files, and add any skills it depends on. For a new source, add a `flake = false` input in `flake.nix`.
 - Remove: delete its line. Home-manager removes the links on the next switch.
@@ -43,6 +45,19 @@ Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
 - Dry check: `nix build .#homeConfigurations.linux.activationPackage` and `ls -l result/home-files/.agents/skills`.
 - Project-scoped skills do not belong here; commit them in the repo's `.agents/skills`.
 - `create-verification-skill` writes to `.cursor/skills/` by default; point it at `.agents/skills/` when invoking.
+
+## Code review
+
+Both tools go live after `git pull && ./rebuild.sh`. No extensions, global pager or difftool changes.
+
+- **Hunk, local work with an agent:** run `hunk diff` in the worktree, or `hunk diff main...HEAD` for committed changes. In Pi, Claude Code, Codex or Grok, ask: "Use hunk-review to walk me through this session. Explain your changes with inline notes on the hunks, and answer my comments." The agent navigates and annotates the live diff, without adding explanation comments to source files. Press `a` to show agent notes if hidden; `c` adds your question. To include human questions, the agent reads `hunk session comment list --repo /absolute/worktree/path --type all --json` (the default omits human notes).
+- **tuicr, colleagues' PRs or other diffs:** from a clone with authenticated `gh`, run `tuicr pr <n>`; `tuicr -w` reviews local changes. Add anchored comments with `c`, mark files/hunks reviewed with `r`/`R`, then `y` or `:clip` exports Markdown to paste into the agent and ask whether the code makes sense. `:submit` is separate: it posts a GitHub review, so check the target/head first.
+
+`rebuild.sh` runs `nix flake update --flake "$DIR" hunk tuicr` before switching on either OS. These inputs track upstream's default branches, not release tags; their lock entries refresh on each rebuild, with no manual version bumps. This keeps the install declarative and avoids another installer or release-discovery dependency, but can include unreleased changes or upstream build breakage. Other top-level inputs stay locked. The update may change `flake.lock`; review and commit it before pulling again. Network access is required.
+
+The Intel Mac uses the existing 26.05 nixpkgs plus Hunk's documented systems override; the four-system list is pinned because its newer default dropped Intel macOS. Hunk's skill follows the same source as its binary. No tuicr config is needed: it inherits `EDITOR=nvim`. Review data stays per-machine, outside git; any future config belongs under `~/.config`, not `~/config`.
+
+Sources: [Hunk Nix module](https://github.com/modem-dev/hunk/blob/main/nix/README.md), [live review skill](https://github.com/modem-dev/hunk/blob/main/packages/hunk/skills/hunk-review/SKILL.md), [tuicr usage](https://github.com/agavra/tuicr/blob/main/README.md).
 
 ## Ubuntu system setup
 
