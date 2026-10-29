@@ -37,9 +37,10 @@ Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
 
 ## Global agent skills
 
-`home/skills.nix` links 13 skills into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` from the Hunk input (refreshed on rebuild). The unmanaged `no-mistakes` skill and Claude's `synced/` dir sit alongside.
+`home/skills.nix` links each skill into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Upstream sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` from the Hunk input (refreshed on rebuild). Personal skills live in `home/skills/<name>/` and are listed in the same set. The unmanaged `no-mistakes` skill and Claude's `synced/` dir sit alongside.
 
-- Add: put `name = "${src}/path/to/skill-dir";` in the `skills` set (name must match the skill's `name:` and not collide). Link the whole dir, so bundled files travel. Check the skill has no `../` references to repo-level files, and add any skills it depends on. For a new source, add a `flake = false` input in `flake.nix`.
+- Add an upstream skill: put `name = "${src}/path/to/skill-dir";` in the `skills` set (name must match the skill's `name:` and not collide). Link the whole dir, so bundled files travel. Check the skill has no `../` references to repo-level files, and add any skills it depends on. For a new source, add a `flake = false` input in `flake.nix`.
+- Add a personal skill: create `home/skills/<name>/` (self-contained, no `../` references) and add `name = ./skills/<name>;`. The directory name, the attr name, and `name:` must match.
 - Remove: delete its line. Home-manager removes the links on the next switch.
 - Update sources: `nix flake update mattpocock-skills addy-skills cursor-plugins`, review the `flake.lock` diff, `./rebuild.sh`.
 - Dry check: `nix build .#homeConfigurations.linux.activationPackage` and `ls -l result/home-files/.agents/skills`.

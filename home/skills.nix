@@ -17,6 +17,7 @@ let
   '';
 
   # name = source dir. The name must match the dir's SKILL.md `name:`.
+  # Personal skills live in ./skills (this repo). Upstream skills come from flake inputs.
   skills = {
     # mattpocock/skills (grill-me needs grilling; to-spec and to-tickets need setup-matt-pocock-skills)
     grill-me = "${mp}/productivity/grill-me";
@@ -36,6 +37,8 @@ let
     create-verification-skill = "${pstack}/create-verification-skill";
     maintain-verification-skill = "${pstack}/maintain-verification-skill";
     typescript-best-practices = typescriptSkill;
+    # personal
+    firstmate-home-sync = ./skills/firstmate-home-sync;
   };
 in
 
