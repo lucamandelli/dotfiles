@@ -30,6 +30,8 @@ let
     to-tickets = "${mp}/engineering/to-tickets";
     # addyosmani/agent-skills
     source-driven-development = "${addy}/source-driven-development";
+    # Hunk's live review skill, from the same pinned source as the binary.
+    hunk-review = "${inputs.hunk}/packages/hunk/skills/hunk-review";
     # cursor/plugins pstack
     create-verification-skill = "${pstack}/create-verification-skill";
     maintain-verification-skill = "${pstack}/maintain-verification-skill";
