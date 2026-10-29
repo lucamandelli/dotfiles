@@ -20,9 +20,6 @@
     "type": "command",
     "command": "~/.claude/statusline.sh"
   },
-  "enabledPlugins": {
-    "agent-skills@addy-agent-skills": true
-  },
   "extraKnownMarketplaces": {
     "addy-agent-skills": {
       "source": {

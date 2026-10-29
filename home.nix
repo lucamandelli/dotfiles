@@ -117,6 +117,26 @@ in
     fi
   '';
 
+  # Claude Code rewrites settings.json at runtime (plugins, model), so it can't be a symlink into
+  # the repo. Merge the fixed settings over the live file instead: base wins, other keys survive.
+  # Before checkLinkTargets so the old symlink is replaced by a regular file first.
+  home.activation.mergeClaudeSettings = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+    settings="$HOME/.claude/settings.json"
+    base="${dotfiles}/home/.claude/settings.base.json"
+    merged="$(mktemp)"
+    mkdir -p "$HOME/.claude"
+    if [ -e "$settings" ]; then
+      ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$settings" "$base" > "$merged"
+    else
+      cp "$base" "$merged"
+    fi
+    if [ -L "$settings" ] || ! cmp -s "$merged" "$settings"; then
+      run mv -f "$merged" "$settings"
+    else
+      rm -f "$merged"
+    fi
+  '';
+
   # ~/.config/herdr used to link the whole dir; home-manager won't drop that link on its own
   # and would write config.toml's link through it into the repo, a symlink loop.
   home.activation.unlinkHerdrDir = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
@@ -134,7 +154,6 @@ in
   home.file.".config/mise".source = link ".config/mise";
   home.file.".config/starship.toml".source = link ".config/starship.toml";
   home.file.".config/herdr/config.toml".source = link ".config/herdr/config.toml";  # file only: the dir holds runtime state
-  home.file.".claude/settings.json".source = link ".claude/settings.json";
   home.file.".claude/statusline.sh".source = link ".claude/statusline.sh";
 
   # One source of truth for global agent rules.
