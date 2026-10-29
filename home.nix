@@ -160,4 +160,8 @@ in
   home.file.".claude/CLAUDE.md".source = link "AGENTS.md";
   home.file.".codex/AGENTS.md".source = link "AGENTS.md";
   home.file.".pi/agent/AGENTS.md".source = link "AGENTS.md";
+
+  # Pi footer/statusline + prompt rail. Select the theme in ~/.pi/agent/settings.json ("theme": "tokyo-quota").
+  home.file.".pi/agent/extensions/footer.ts".source = link ".pi/agent/extensions/footer.ts";
+  home.file.".pi/agent/themes/tokyo-quota.json".source = link ".pi/agent/themes/tokyo-quota.json";
 }
