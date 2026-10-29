@@ -25,6 +25,7 @@ let
     # cursor/plugins pstack
     create-verification-skill = "${pstack}/create-verification-skill";
     maintain-verification-skill = "${pstack}/maintain-verification-skill";
+    typescript-best-practices = "${pstack}/typescript-best-practices";
   };
 in
 
