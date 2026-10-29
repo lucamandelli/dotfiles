@@ -107,6 +107,16 @@ in
     fi
   '';
 
+  # codex is not in nixpkgs; install it once, then `codex update` keeps it current.
+  # ~/.local/bin on PATH stops the installer from appending its PATH block to the managed ~/.zshrc.
+  home.activation.installCodex = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ ! -x "$HOME/.local/bin/codex" ]; then
+      PATH="$HOME/.local/bin:${lib.makeBinPath [ pkgs.curl pkgs.gawk pkgs.gnused pkgs.gnugrep pkgs.gnutar pkgs.gzip pkgs.findutils pkgs.coreutils ]}:$PATH" CODEX_NON_INTERACTIVE=1 \
+        run ${pkgs.bash}/bin/bash -c '${pkgs.curl}/bin/curl -fsSL https://chatgpt.com/codex/install.sh | sh' \
+        || echo "codex install failed, rerun the switch to retry"
+    fi
+  '';
+
   # ~/.config/herdr used to link the whole dir; home-manager won't drop that link on its own
   # and would write config.toml's link through it into the repo, a symlink loop.
   home.activation.unlinkHerdrDir = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
