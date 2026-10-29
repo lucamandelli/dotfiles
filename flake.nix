@@ -48,7 +48,7 @@
             home-manager.useUserPackages = true;
             home-manager.backupFileExtension = "backup";  # existing ~/.zshrc -> ~/.zshrc.backup
             home-manager.extraSpecialArgs = { inherit user inputs; };
-            home-manager.users.${user} = import ./home.nix;
+            home-manager.users.${user}.imports = [ ./home.nix ./home/review-tools-mac.nix ];
           }
         ];
       };

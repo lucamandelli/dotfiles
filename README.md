@@ -18,7 +18,8 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
 - `home.nix` - shared user config and out-of-store symlinks
 - `linux.nix` - Ubuntu-only home-manager bits
 - `home/skills.nix` - global agent skills (see below)
-- `home/review-tools.nix` - shared Hunk and tuicr installation
+- `home/review-tools.nix` - Hunk and tuicr from the flake (Ubuntu, imported by `linux.nix`)
+- `home/review-tools-mac.nix` - Hunk and tuicr release binaries (Mac, imported by `flake.nix`)
 - `home/` - the real config files, symlinked into `~` (edit here, no rebuild needed)
 - `etc/` - system files outside `~` (keyd), linked by hand on Ubuntu
 - `rebuild.sh` - links the repo to `~/.dotfiles` and switches the right config for the OS
@@ -54,7 +55,13 @@ Both tools go live after `git pull && ./rebuild.sh`. No extensions, global pager
 - **Hunk, local work with an agent:** run `hunk diff` in the worktree, or `hunk diff main...HEAD` for committed changes. In Pi, Claude Code, Codex or Grok, ask: "Use hunk-review to walk me through this session. Explain your changes with inline notes on the hunks, and answer my comments." The agent navigates and annotates the live diff, without adding explanation comments to source files. Press `a` to show agent notes if hidden; `c` adds your question. To include human questions, the agent reads `hunk session comment list --repo /absolute/worktree/path --type all --json` (the default omits human notes).
 - **tuicr, colleagues' PRs or other diffs:** from a clone with authenticated `gh`, run `tuicr pr <n>`; `tuicr -w` reviews local changes. Add anchored comments with `c`, mark files/hunks reviewed with `r`/`R`, then `y` or `:clip` exports Markdown to paste into the agent and ask whether the code makes sense. `:submit` is separate: it posts a GitHub review, so check the target/head first.
 
-`rebuild.sh` runs `nix flake update --flake "$DIR" hunk tuicr` before switching on either OS. These inputs track upstream's default branches, not release tags; their lock entries refresh on each rebuild, with no manual version bumps. This keeps the install declarative and avoids another installer or release-discovery dependency, but can include unreleased changes or upstream build breakage. Other top-level inputs stay locked. The update may change `flake.lock`; review and commit it before pulling again. Network access is required.
+**Ubuntu** builds both from the flake (`home/review-tools.nix`, imported by `linux.nix`); `rebuild.sh` runs `nix flake update --flake "$DIR" hunk tuicr` before its switch. These inputs track upstream's default branches, not release tags; their lock entries refresh on each rebuild, with no manual version bumps. This keeps the install declarative and avoids another installer or release-discovery dependency, but can include unreleased changes or upstream build breakage.
+
+**Intel Mac** must not build them: there is no binary cache, so Nix compiles bun, zig and rust (1300+ derivations, minutes of full CPU). `home/review-tools-mac.nix` (imported only by the Mac in `flake.nix`) downloads the upstream release binaries into `~/.local/bin` once. Upgrade: bump the versions in that file, delete `~/.local/bin/{hunk,tuicr}`, rerun the switch. `rebuild.sh` skips the flake update on the Mac.
+
+**Rule for agents:** a tool added for Linux can silently become a source build on the Mac, and the Mac is the one that suffers. Before committing a new tool, check both. On the Mac, `nix build .#darwinConfigurations.mac.system --dry-run` must not list the tool, rust, zig or bun among "will be built" (a handful of derivations is normal). On Linux, `nix eval .#homeConfigurations.linux.activationPackage.drvPath` must still evaluate; the Mac dry-run queries the `x86_64-darwin` cache and is not verified from Linux, so from Linux say the Mac check is pending. If one OS needs a different install path, keep the existing file for one OS and add a separate `*-mac.nix` or `*-linux.nix`, imported only from that OS's entry point, instead of branching inside one file. Install preference: nixpkgs when it has a cache hit, then mise, then an install-once activation like herdr/grok/codex.
+
+Other top-level inputs stay locked. The update may change `flake.lock`; review and commit it before pulling again. Network access is required.
 
 The Intel Mac uses the existing 26.05 nixpkgs plus Hunk's documented systems override; the four-system list is pinned because its newer default dropped Intel macOS. Hunk's skill follows the same source as its binary. No tuicr config is needed: it inherits `EDITOR=nvim`. Review data stays per-machine, outside git; any future config belongs under `~/.config`, not `~/config`.
 
