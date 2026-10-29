@@ -7,6 +7,8 @@ let
 in
 
 {
+  imports = [ ./home/review-tools.nix ];  # built from the flake; the Mac uses review-tools-mac.nix
+
   # Standalone home-manager on a non-NixOS distro (Ubuntu).
   programs.home-manager.enable = true;
   targets.genericLinux.enable = true;  # desktop entries and fonts visible to apt apps
