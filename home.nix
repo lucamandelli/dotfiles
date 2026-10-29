@@ -14,6 +14,8 @@ let
 in
 
 {
+  imports = [ ./home/skills.nix ];
+
   home.username = user;
   home.homeDirectory = if pkgs.stdenv.isDarwin then "/Users/${user}" else "/home/${user}";
   home.stateVersion = "24.11";
