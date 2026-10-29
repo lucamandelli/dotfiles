@@ -16,6 +16,7 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
 - `configuration.nix` - Mac system config; `hostPlatform = "x86_64-darwin"`
 - `home.nix` - shared user config and out-of-store symlinks
 - `linux.nix` - Ubuntu-only home-manager bits
+- `home/skills.nix` - global agent skills (see below)
 - `home/` - the real config files, symlinked into `~` (edit here, no rebuild needed)
 - `etc/` - system files outside `~` (keyd), linked by hand on Ubuntu
 - `rebuild.sh` - links the repo to `~/.dotfiles` and switches the right config for the OS
@@ -31,6 +32,17 @@ mise install
 
 Needs Nix (Determinate installer) first, plus nix-darwin on the Mac.
 Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
+
+## Global agent skills
+
+`home/skills.nix` links 12 skills from pinned flake inputs (`mattpocock-skills`, `addy-skills`, `cursor-plugins`, `flake = false`, locked in `flake.lock`) into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). The unmanaged `no-mistakes` skill and Claude's `synced/` dir sit alongside.
+
+- Add: put `name = "${src}/path/to/skill-dir";` in the `skills` set (name must match the skill's `name:` and not collide). Link the whole dir, so bundled files travel. Check the skill has no `../` references to repo-level files, and add any skills it depends on. For a new source, add a `flake = false` input in `flake.nix`.
+- Remove: delete its line. Home-manager removes the links on the next switch.
+- Update sources: `nix flake update mattpocock-skills addy-skills cursor-plugins`, review the `flake.lock` diff, `./rebuild.sh`.
+- Dry check: `nix build .#homeConfigurations.linux.activationPackage` and `ls -l result/home-files/.agents/skills`.
+- Project-scoped skills do not belong here; commit them in the repo's `.agents/skills`.
+- `create-verification-skill` writes to `.cursor/skills/` by default; point it at `.agents/skills/` when invoking.
 
 ## Ubuntu system setup
 
