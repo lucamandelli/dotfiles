@@ -28,7 +28,7 @@ in
   ];
   fonts.fontconfig.enable = true;
   home.sessionVariables.EDITOR = "nvim";
-  home.sessionPath = [ "$HOME/.local/bin" ];
+  home.sessionPath = [ "$HOME/.local/bin" "$HOME/.grok/bin" ];
 
   programs.zsh = {
     enable = true;
@@ -40,10 +40,15 @@ in
       share = true;        # shared across open terminals
       ignoreAllDups = true;
     };
-    initContent = ''
-      zstyle ':completion:*' menu select  # Tab opens a navigable menu
-      zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'  # smart case: lowercase matches both
-    '';
+    initContent = lib.mkMerge [
+      (lib.mkOrder 550 ''
+        fpath+=(~/.grok/completions/zsh)  # grok writes its completions here
+      '')
+      ''
+        zstyle ':completion:*' menu select  # Tab opens a navigable menu
+        zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'  # smart case: lowercase matches both
+      ''
+    ];
     shellAliases = {
       ccd = "claude --dangerously-skip-permissions";
       ccr = "claude --resume";
@@ -89,6 +94,16 @@ in
       PATH="${lib.makeBinPath [ pkgs.curl pkgs.gawk pkgs.coreutils ]}:$PATH" \
         run ${pkgs.bash}/bin/bash -c '${pkgs.curl}/bin/curl -fsSL https://herdr.dev/install.sh | sh' \
         || echo "herdr install failed, rerun the switch to retry"
+    fi
+  '';
+
+  # grok is not in nixpkgs; install it once, then `grok update` keeps it current.
+  # SHELL=sh stops the installer from appending its PATH block to the managed ~/.zshrc.
+  home.activation.installGrok = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ ! -x "$HOME/.grok/bin/grok" ]; then
+      PATH="${lib.makeBinPath [ pkgs.curl pkgs.gawk pkgs.gnused pkgs.gnugrep pkgs.coreutils ]}:$PATH" SHELL=/bin/sh \
+        run ${pkgs.bash}/bin/bash -c '${pkgs.curl}/bin/curl -fsSL https://x.ai/cli/install.sh | bash' \
+        || echo "grok install failed, rerun the switch to retry"
     fi
   '';
 

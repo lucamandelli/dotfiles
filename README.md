@@ -5,7 +5,7 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
 ## What it sets up
 
 - Both: zsh (autosuggestions, syntax highlighting, menu completion, shared history), starship,
-  neovim (LazyVim starter) with ripgrep and fd, mise (Node, Python, Bun, pi), herdr,
+  neovim (LazyVim starter) with ripgrep and fd, mise (Node, Python, Bun, pi), herdr, grok,
   JetBrains Mono Nerd Font, Ghostty config, Claude settings and one shared `home/AGENTS.md`
 - Mac only: macOS defaults and Homebrew casks via `configuration.nix`
 - Ubuntu: GUI and system apps come from apt (Chrome, 1Password, Ghostty, zsh, Docker, keyd); GNOME shortcuts and clipboard history via `linux.nix`
@@ -150,4 +150,5 @@ Log out and back in afterwards: zsh, the docker group and the GNOME extensions o
 - `ccd` alias runs `claude --dangerously-skip-permissions`; `ccr` runs `claude --resume`.
 - Ubuntu: `~/.local/bin/sudo` wraps sudo so that without a terminal (coding agents) it runs `sudo -A`, and a zenity dialog shows the command and asks for the password.
 - herdr is installed once by the switch; `herdr update` keeps it current.
+- grok is installed once by the switch (`~/.grok/bin`, added to PATH here); `grok update` keeps it current. Run `grok login` once per machine.
 - First `nvim` launch installs LazyVim plugins (needs network once).
