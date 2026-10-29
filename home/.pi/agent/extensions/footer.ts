@@ -19,7 +19,7 @@ const HEX = {
 const REFRESH_MS = 60_000;
 const TICK_MS = 30_000;
 const STALE_MS = 5 * 60_000;
-const EXEC_TIMEOUT_MS = 10_000;
+const EXEC_TIMEOUT_MS = 20_000;
 
 const ICON = { branch: "\uf418", brain: "\u{f09d1}", gauge: "\u{f0f86}", reset: "\u{f06b0}" };
 
@@ -251,7 +251,7 @@ export default function (pi: ExtensionAPI) {
 		inflight = true;
 		execFile(
 			"quota-axi",
-			["--json", "--max-age", "90s", "--no-credential-refresh", "--provider", "claude,codex,grok"],
+			["--json", "--max-age", "90s", "--provider", "claude,codex,grok"],
 			{ timeout: EXEC_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
 			(err, stdout) => {
 				inflight = false;
