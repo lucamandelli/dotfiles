@@ -38,7 +38,9 @@
     onActivation.extraFlags = [ "--force" ];
     casks = [
       "1password-cli"
+      "cursor"
       "ghostty"
+      "grok-bot"
     ];
   };
 }

@@ -8,7 +8,7 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
   neovim (LazyVim starter) with ripgrep and fd, mise (Node, Python, Bun, pi), herdr, grok, codex,
   Hunk (live agent review) and tuicr (PR review),
   JetBrains Mono Nerd Font, Ghostty config, Claude settings (merged, not linked) and one shared `home/AGENTS.md`
-- Mac only: macOS defaults and Homebrew casks via `configuration.nix`
+- Mac only: macOS defaults and Homebrew casks via `configuration.nix` (1Password CLI, Cursor, Ghostty, Grok Bot)
 - Ubuntu: GUI and system apps come from apt (Chrome, 1Password, Ghostty, zsh, Docker, keyd); GNOME shortcuts and clipboard history via `linux.nix`
 
 ## Layout
