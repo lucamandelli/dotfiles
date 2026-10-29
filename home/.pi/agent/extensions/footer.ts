@@ -1,4 +1,4 @@
-// Footer (Starship-prose statusline with subscription quota) + C3 "Rail" prompt box.
+// Footer (Starship-prose statusline with subscription quota used %) + C3 "Rail" prompt box.
 // Pairs with themes/tokyo-quota.json. Quota comes from `quota-axi --json`, refreshed off the render path.
 import { execFile } from "node:child_process";
 import { basename } from "node:path";
@@ -137,7 +137,9 @@ const formatAge = (ms: number) => {
 	const m = Math.floor(ms / 60_000);
 	return m >= 60 ? `${Math.floor(m / 60)}h` : `${m}m`;
 };
-const pctRole = (pct: number) => (pct < 20 ? "error" : pct < 50 ? "warning" : "success");
+// pct here is quota USED (100 - remaining)
+const usedPct = (remaining: number) => Math.round(100 - remaining);
+const pctRole = (used: number) => (used >= 80 ? "error" : used >= 50 ? "warning" : "success");
 
 // ---------------------------------------------------------------- footer rendering (pure)
 interface Level {
@@ -209,12 +211,12 @@ function line2(t: Theme, i: FooterInput, lv: Level): string {
 		const lim = q.windows.find((w) => w.id === q.limiting)!;
 		const shown = lv.bothWindows ? q.windows : [lim];
 		const parts = shown.map((w, idx) => {
-			const pct = w.id === lim.id ? q.effective : w.pct;
+			const pct = usedPct(w.id === lim.id ? q.effective : w.pct);
 			const tag = w.kind === "session" ? "5h" : "wk";
 			const val = stale ? t.fg("dim", `~${pct}%`) : bold(t.fg(pctRole(pct), `${pct}%`));
 			if (lv.names === "initial") return val;
 			let s = `${val} ${t.fg(stale ? "dim" : "muted", tag)}`;
-			const showReset = w.id === lim.id && w.resetsAt !== undefined && (!lv.resetOnlyLow || q.effective < 20);
+			const showReset = w.id === lim.id && w.resetsAt !== undefined && (!lv.resetOnlyLow || usedPct(q.effective) >= 80);
 			if (showReset) s += ` ${t.fg("dim", `${ICON.reset}${formatCountdown(w.resetsAt! - i.now)}`)}`;
 			return idx === 0 ? s : `${t.fg("borderMuted", "· ")}${s}`;
 		});
