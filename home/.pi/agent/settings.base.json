@@ -1,5 +1,18 @@
 {
   "quietStartup": true,
   "theme": "tokyo-quota",
-  "packages": ["npm:pi-cc-extensions"]
+  "packages": ["npm:pi-cc-extensions", "npm:pi-claude-auth"],
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-5-5",
+  "enabledModels": [
+    "anthropic/claude-fable-5-1",
+    "anthropic/claude-haiku-5-5",
+    "anthropic/claude-opus-5-5",
+    "anthropic/claude-sonnet-5-5",
+    "openai/gpt-6.1-terra",
+    "openai/gpt-6.1-sol",
+    "openai/gpt-6-astra",
+    "xai/grok-4.7"
+  ],
+  "warnings": {"anthropicExtraUsage": false}
 }
