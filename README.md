@@ -5,7 +5,8 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
 ## What it sets up
 
 - Both: zsh (autosuggestions, syntax highlighting, menu completion, shared history), starship,
-  neovim (LazyVim starter) with ripgrep and fd, mise (Node, Python, Bun, pi), herdr, grok, codex,
+  neovim (LazyVim starter) with ripgrep and fd, mise (Node, Python, Bun, pi, gh-axi,
+  chrome-devtools-axi, lavish-axi, quota-axi, tasks-axi), herdr, grok, codex, no-mistakes,
   Hunk (live agent review) and tuicr (PR review),
   JetBrains Mono Nerd Font, Ghostty config, Claude settings (merged, not linked) and one shared `home/AGENTS.md`
 - Mac only: macOS defaults and Homebrew casks via `configuration.nix` (1Password CLI, Cursor, Ghostty, Grok Bot)
@@ -38,7 +39,7 @@ Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
 
 ## Global agent skills
 
-`home/skills.nix` links each skill into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Upstream sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` from the Hunk input (refreshed on rebuild). Personal skills live in `home/skills/<name>/` and are listed in the same set. The unmanaged `no-mistakes` skill and Claude's `synced/` dir sit alongside.
+`home/skills.nix` links each skill into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Upstream sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` from the Hunk input (refreshed on rebuild). Personal skills live in `home/skills/<name>/` and are listed in the same set. The `no-mistakes` skill and Claude's `synced/` dir sit alongside, unmanaged by home-manager.
 
 - Add an upstream skill: put `name = "${src}/path/to/skill-dir";` in the `skills` set (name must match the skill's `name:` and not collide). Link the whole dir, so bundled files travel. Check the skill has no `../` references to repo-level files, and add any skills it depends on. For a new source, add a `flake = false` input in `flake.nix`.
 - Add a personal skill: create `home/skills/<name>/` (self-contained, no `../` references) and add `name = ./skills/<name>;`. The directory name, the attr name, and `name:` must match.
@@ -195,5 +196,6 @@ Log out and back in afterwards: zsh, the docker group and the GNOME extensions o
 - herdr is installed once by the switch; `herdr update` keeps it current.
 - grok is installed once by the switch (`~/.grok/bin`, added to PATH here); `grok update` keeps it current. Run `grok login` once per machine.
 - codex is installed once by the switch (`~/.local/bin/codex`); `codex update` keeps it current. Run `codex login` once per machine.
+- no-mistakes uses the upstream release binary in `~/.no-mistakes/bin`, linked from `~/.local/bin`. The switch bootstraps missing skills from the installed release in both agent skill directories; existing binaries and skill directories are left untouched. `no-mistakes init` refreshes the skills when setting up a repository. `no-mistakes update` updates the binary and restarts its daemon, so coordinate with other users of that daemon first. The upstream installer also restarts the daemon, so the switch downloads the release directly instead. No cleanup is needed for existing no-mistakes installs or real skill directories.
 - `~/.claude/settings.json` is not a symlink: the switch merges `home/.claude/settings.base.json` over it, so plugins and model changed by Claude Code stay out of git. Removing a key from the base does not remove it from the live file.
 - First `nvim` launch installs LazyVim plugins (needs network once).
