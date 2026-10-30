@@ -48,6 +48,14 @@ Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
 - Project-scoped skills do not belong here; commit them in the repo's `.agents/skills`.
 - `create-verification-skill` writes to `.cursor/skills/` by default; point it at `.agents/skills/` when invoking.
 
+## Pi transcript display
+
+Linked into `~/.pi/agent` (see `home.nix`): `extensions/{thinking-rail,code-box,session-chrome}.ts`, `pi-cc-extensions.json`, and the `tokyo-quota` theme tweaks (`userMessageBg`, `mdQuoteBorder`). Tool rows come from the `pi-cc-extensions` package (mode `on`, its footer, editor prefix and startup header off).
+
+- **One-time per machine** (`settings.json` is machine-local state, so it is not managed here): `pi install npm:pi-cc-extensions`, then set `"quietStartup": true` and `"theme": "tokyo-quota"` in `~/.pi/agent/settings.json`. Without `quietStartup`, Pi's own `[Skills]`/`[Extensions]` listing shows next to our header.
+- `code-box.ts` (code frame) and `session-chrome.ts` (`❯` prompt) patch private Pi/pi-tui prototypes on `session_start`, restore on `session_shutdown`, and fall back to native rendering if the method shape differs. `pi-cc-extensions` patches private components too; after a Pi upgrade that breaks one, remove it from `packages` or delete the file link.
+- Known package quirks: expanded tool output (ctrl+o) uses the package's green/red boxes, and at narrow widths a truncated error line can leak a cut ANSI sequence.
+
 ## Code review
 
 Both tools go live after `git pull && ./rebuild.sh`. No extensions, global pager or difftool changes.
