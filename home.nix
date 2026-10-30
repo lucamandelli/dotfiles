@@ -166,7 +166,7 @@ in
   # Pi footer/statusline + prompt rail. Select the theme in ~/.pi/agent/settings.json ("theme": "tokyo-quota").
   home.file.".pi/agent/extensions/footer.ts".source = link ".pi/agent/extensions/footer.ts";
   home.file.".pi/agent/themes/tokyo-quota.json".source = link ".pi/agent/themes/tokyo-quota.json";
-  # Transcript display: thinking rail, code panel, session header/prompt (needs `quietStartup: true`, see README).
+  # Transcript display: thinking rail, code frame, session header/prompt (needs `quietStartup: true`, see README).
   home.file.".pi/agent/extensions/thinking-rail.ts".source = link ".pi/agent/extensions/thinking-rail.ts";
   home.file.".pi/agent/extensions/code-box.ts".source = link ".pi/agent/extensions/code-box.ts";
   home.file.".pi/agent/extensions/session-chrome.ts".source = link ".pi/agent/extensions/session-chrome.ts";
