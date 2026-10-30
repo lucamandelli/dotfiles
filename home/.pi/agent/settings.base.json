@@ -1,4 +1,5 @@
 {
   "quietStartup": true,
+  "theme": "tokyo-quota",
   "packages": ["npm:pi-cc-extensions"]
 }

@@ -140,7 +140,7 @@ in
   '';
 
   # Pi owns its live settings; merge fixed keys without replacing machine-local packages.
-  home.activation.mergePiSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.mergePiSettings = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
     settings="$HOME/.pi/agent/settings.json"
     base="${dotfiles}/home/.pi/agent/settings.base.json"
     merged="$(mktemp)"
@@ -158,8 +158,20 @@ in
     else
       rm -f "$merged"
     fi
-    if command -v pi >/dev/null 2>&1; then
+    # Activation has a minimal PATH; mise's environment also supplies Pi's Node runtime.
+    if [ -x "$HOME/.nix-profile/bin/mise" ]; then
+      mise="$HOME/.nix-profile/bin/mise"
+    else
+      mise="$(command -v mise || true)"
+    fi
+    if [ -n "$mise" ] && "$mise" which pi >/dev/null 2>&1; then
+      run "$mise" exec -- pi update --extensions || echo "Pi extension update failed, rerun the switch to retry"
+    elif [ -x "$HOME/.local/share/mise/shims/pi" ]; then
+      PATH="$HOME/.local/share/mise/shims:$PATH" run "$HOME/.local/share/mise/shims/pi" update --extensions || echo "Pi extension update failed, rerun the switch to retry"
+    elif command -v pi >/dev/null 2>&1; then
       run pi update --extensions || echo "Pi extension update failed, rerun the switch to retry"
+    else
+      echo "Pi not found, install it with mise and rerun the switch to install extensions"
     fi
   '';
 
@@ -187,7 +199,7 @@ in
   home.file.".codex/AGENTS.md".source = link "AGENTS.md";
   home.file.".pi/agent/AGENTS.md".source = link "AGENTS.md";
 
-  # Pi footer/statusline + prompt rail. Select the theme in ~/.pi/agent/settings.json ("theme": "tokyo-quota").
+  # Pi footer/statusline + prompt rail; the theme is set by mergePiSettings.
   home.file.".pi/agent/extensions/footer.ts".source = link ".pi/agent/extensions/footer.ts";
   home.file.".pi/agent/themes/tokyo-quota.json".source = link ".pi/agent/themes/tokyo-quota.json";
   # Transcript display: thinking rail, code frame, session header/prompt (needs `quietStartup: true`, see README).

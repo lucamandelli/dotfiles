@@ -52,7 +52,7 @@ Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
 
 Linked into `~/.pi/agent` (see `home.nix`): `extensions/{thinking-rail,code-box,session-chrome}.ts`, `pi-cc-extensions.json`, and the `tokyo-quota` theme tweaks (`userMessageBg`, `mdQuoteBorder`). Tool rows come from the `pi-cc-extensions` package (mode `on`, its footer, editor prefix and startup header off).
 
-- Rebuild merges `quietStartup: true` and `npm:pi-cc-extensions` into the machine-local `~/.pi/agent/settings.json`, preserving other settings and packages, then runs `pi update --extensions` if Pi is on PATH. Set `"theme": "tokyo-quota"` there separately. Without `quietStartup`, Pi's own `[Skills]`/`[Extensions]` listing shows next to our header.
+- Rebuild merges `quietStartup: true`, the `tokyo-quota` theme and `npm:pi-cc-extensions` into the machine-local `~/.pi/agent/settings.json`, preserving other settings and packages, then runs `pi update --extensions` if Pi is available. Without `quietStartup`, Pi's own `[Skills]`/`[Extensions]` listing shows next to our header.
 - `code-box.ts` (code frame) and `session-chrome.ts` (`❯` prompt) patch private Pi/pi-tui prototypes on `session_start`, restore on `session_shutdown`, and fall back to native rendering if the method shape differs. `pi-cc-extensions` patches private components too; after a Pi upgrade that breaks one, remove it from `packages` or delete the file link. Rebuild adds the package back.
 - Known package quirks: expanded tool output (ctrl+o) uses the package's green/red boxes, and at narrow widths a truncated error line can leak a cut ANSI sequence.
 
