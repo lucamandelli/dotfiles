@@ -1,4 +1,4 @@
-// Code blocks as a panel (language in the corner, no visible fences).
+// Code blocks as a rounded frame (language in the top border, no visible fences).
 // NOT public API: wraps pi-tui Markdown.prototype.renderToken for "code" tokens.
 // Installed on session_start, restored on session_shutdown; falls back to Pi's native render on any shape mismatch.
 import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
@@ -6,18 +6,18 @@ import { Markdown, truncateToWidth, visibleWidth, wrapTextWithAnsi } from "@eare
 
 const pad = (s: string, w: number) => s + " ".repeat(Math.max(0, w - visibleWidth(s)));
 
-function panel(theme: Theme, self: any, token: any, width: number, nextTokenType?: string): string[] | undefined {
+function frame(theme: Theme, self: any, token: any, width: number, nextTokenType?: string): string[] | undefined {
 	if (typeof token.text !== "string" || typeof self?.theme?.highlightCode !== "function") return undefined;
 	const lang = String(token.lang ?? "").trim();
 	const code: unknown = self.theme.highlightCode(token.text, lang);
 	if (!Array.isArray(code)) return undefined;
 	const inner = Math.max(10, width - 4);
-	const bg = (s: string) => theme.bg("toolPendingBg", s);
-	const label = lang ? theme.fg("dim", lang) : "";
-	const out = [bg(pad(" ".repeat(Math.max(1, width - 1 - visibleWidth(label))) + label, width - 1) + " ")];
+	const b = (s: string) => theme.fg("borderMuted", s);
+	const label = lang ? `─ ${lang} ` : "";
+	const out = [b(`╭${label}${"─".repeat(Math.max(0, width - 2 - visibleWidth(label)))}╮`)];
 	for (const l of code as string[])
-		for (const w of wrapTextWithAnsi(l, inner)) out.push(bg("  " + pad(truncateToWidth(w, inner), inner) + "  "));
-	out.push(bg(" ".repeat(width)));
+		for (const w of wrapTextWithAnsi(l, inner)) out.push(b("│ ") + pad(truncateToWidth(w, inner), inner) + b(" │"));
+	out.push(b(`╰${"─".repeat(Math.max(0, width - 2))}╯`));
 	if (nextTokenType && nextTokenType !== "space") out.push("");
 	return out;
 }
@@ -48,7 +48,7 @@ export default function (pi: ExtensionAPI) {
 		const patched = function (this: any, token: any, width: number, nextTokenType?: string, styleContext?: any) {
 			if (state.active && state.theme && token?.type === "code") {
 				try {
-					const out = panel(state.theme, this, token, width, nextTokenType);
+					const out = frame(state.theme, this, token, width, nextTokenType);
 					if (out) return out;
 				} catch {}
 			}
