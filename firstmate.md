@@ -19,7 +19,7 @@ Follow the private home README for the complete first-time setup.
 
 ## New machine, including Mac
 
-1. Set up these dotfiles and run `mise install` as in the [README](README.md#usage). They provide Pi and Node via mise, `jq` and Herdr; Git and authenticated `gh` are also needed.
+1. Set up these dotfiles and run `mise install` as in the [README](README.md#usage). They provide Pi and Node via mise, `jq` and Herdr; Git and authenticated `gh` are also needed. The rebuild merges Pi's `quietStartup`, theme and `pi-cc-extensions` settings into its machine-local settings.
 2. Clone Firstmate and authenticate GitHub, following its [quick start](https://github.com/kunchenguid/firstmate#install-and-launch):
 
    ```sh
@@ -28,7 +28,7 @@ Follow the private home README for the complete first-time setup.
    ```
 
 3. Follow the layout A first-time instructions in the private home README, as directed by the global [firstmate-home-sync skill](home/skills/firstmate-home-sync/SKILL.md). Run its command blocks and complete the initial pull before starting Firstmate. Do not run the home on two machines at once.
-4. Check the [toolchain](https://github.com/kunchenguid/firstmate/blob/main/docs/configuration.md#toolchain). Treehouse is installed separately; no-mistakes and the required `-axi` CLIs are being added to the dotfiles in a separate change, so install them separately until that change lands. Backend requirements vary: Herdr needs Herdr, `jq` and Treehouse; the default tmux backend needs tmux and Treehouse. Firstmate reports missing or outdated tools at session start.
+4. Check the [toolchain](https://github.com/kunchenguid/firstmate/blob/main/docs/configuration.md#toolchain). The dotfiles install no-mistakes and the required `-axi` CLIs; install Treehouse separately. Backend requirements vary: Herdr needs Herdr, `jq` and Treehouse; the default tmux backend needs tmux and Treehouse. Firstmate reports missing or outdated tools at session start.
 5. Start Pi as below and approve its project trust prompt once for this clone. Pi then auto-loads the tracked project extensions, including the primary watcher; do not install them globally. Local untracked extensions are machine-specific and do not come from the clone. See [Firstmate's launch instructions](https://github.com/kunchenguid/firstmate#install-and-launch).
 
 ## Each session
