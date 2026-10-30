@@ -1,8 +1,21 @@
 # Firstmate setup
 
-[Firstmate](https://github.com/kunchenguid/firstmate) is a repo of instructions, skills and scripts, not a global installation. Keep its code at `~/github/firstmate`: its internal skills stay in `.agents/skills/` and its Pi extensions in `.pi/extensions/`. This keeps Firstmate-specific behavior scoped to its project. Global dotfiles skills, including `firstmate-home-sync`, remain available separately.
+[Firstmate](https://github.com/kunchenguid/firstmate) is a repo of instructions, skills and scripts, not a global installation.
 
-The private operational home uses layout A: the private `lucamandelli/firstmate-home` repo has a separate bare Git directory at `~/.firstmate-home.git`, with its worktree in the code clone and sparse patterns `/data/` and `/config/`. The code clone's Git remains separate, so code updates and private home sync use different repositories without a second home directory. `config/home-sync.sh` handles home push and pull; `state/` and `projects/` are local, not synced. On this machine the bare repo has `status.showUntrackedFiles=all` and `sparse.expectFilesOutsideOfPatterns=true`; the sync skill's first-time instructions instead specify `status.showUntrackedFiles=no`. Follow the private home README for new setups rather than copying these live settings blindly.
+## Why it is set up this way
+
+Keep code in `~/github/firstmate` and the private operational home in the separate `lucamandelli/firstmate-home` repository. Layout A uses one shared worktree: the private repo has a bare Git directory at `~/.firstmate-home.git` and checks out only `data/` and `config/`. Firstmate's code Git ignores those private directories. Code updates and home sync remain separate without a second home folder. `config/home-sync.sh` handles push and pull; `state/` and `projects/` stay local. Only one machine may run the home at a time.
+
+Firstmate's internal skills stay in the clone's `.agents/skills/` and its Pi extensions in `.pi/extensions/`, not global agent configuration. Global dotfiles skills, including `firstmate-home-sync`, remain available separately.
+
+The bare repo on this machine has `core.worktree=~/github/firstmate` (stored as an absolute path), `core.sparseCheckout=true`, patterns `/data/` and `/config/`, `status.showUntrackedFiles=no`, and `sparse.expectFilesOutsideOfPatterns=true`. The home repo also tracks a root `README.md`, which collides with Firstmate's README in the shared worktree. Without `sparse.expectFilesOutsideOfPatterns`, Git clears skip-worktree on the present file, reports it modified, and a pull could overwrite Firstmate's README. Protect it with:
+
+```sh
+git --git-dir=~/.firstmate-home.git config sparse.expectFilesOutsideOfPatterns true
+git --git-dir=~/.firstmate-home.git update-index --skip-worktree README.md
+```
+
+Follow the private home README for the complete first-time setup.
 
 ## New machine, including Mac
 
@@ -15,7 +28,7 @@ The private operational home uses layout A: the private `lucamandelli/firstmate-
    ```
 
 3. Follow the layout A first-time instructions in the private home README, as directed by the global [firstmate-home-sync skill](home/skills/firstmate-home-sync/SKILL.md). Run its command blocks and complete the initial pull before starting Firstmate. Do not run the home on two machines at once.
-4. Check the [toolchain](https://github.com/kunchenguid/firstmate/blob/main/docs/configuration.md#toolchain). Treehouse, no-mistakes and the required `-axi` CLIs are not installed by these dotfiles; install or update them separately. Backend requirements vary: Herdr needs Herdr, `jq` and Treehouse; the default tmux backend needs tmux and Treehouse. Firstmate reports missing or outdated tools at session start.
+4. Check the [toolchain](https://github.com/kunchenguid/firstmate/blob/main/docs/configuration.md#toolchain). Treehouse is installed separately; no-mistakes and the required `-axi` CLIs are being added to the dotfiles in a separate change, so install them separately until that change lands. Backend requirements vary: Herdr needs Herdr, `jq` and Treehouse; the default tmux backend needs tmux and Treehouse. Firstmate reports missing or outdated tools at session start.
 5. Start Pi as below and approve its project trust prompt once for this clone. Pi then auto-loads the tracked project extensions, including the primary watcher; do not install them globally. Local untracked extensions are machine-specific and do not come from the clone. See [Firstmate's launch instructions](https://github.com/kunchenguid/firstmate#install-and-launch).
 
 ## Each session
