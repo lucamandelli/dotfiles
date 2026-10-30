@@ -139,6 +139,30 @@ in
     fi
   '';
 
+  # Pi owns its live settings; merge fixed keys without replacing machine-local packages.
+  home.activation.mergePiSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    settings="$HOME/.pi/agent/settings.json"
+    base="${dotfiles}/home/.pi/agent/settings.base.json"
+    merged="$(mktemp)"
+    mkdir -p "$HOME/.pi/agent"
+    if [ -e "$settings" ]; then
+      input="$settings"
+    else
+      input=/dev/null
+    fi
+    ${pkgs.jq}/bin/jq -s '(.[0] // {}) as $live | .[-1] as $base |
+      ($live * $base) | .packages = reduce $base.packages[] as $p
+        ($live.packages // []; if index($p) == null then . + [$p] else . end)' "$input" "$base" > "$merged"
+    if [ -L "$settings" ] || ! cmp -s "$merged" "$settings"; then
+      run mv -f "$merged" "$settings"
+    else
+      rm -f "$merged"
+    fi
+    if command -v pi >/dev/null 2>&1; then
+      run pi update --extensions || echo "Pi extension update failed, rerun the switch to retry"
+    fi
+  '';
+
   # ~/.config/herdr used to link the whole dir; home-manager won't drop that link on its own
   # and would write config.toml's link through it into the repo, a symlink loop.
   home.activation.unlinkHerdrDir = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
