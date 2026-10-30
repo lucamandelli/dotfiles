@@ -109,6 +109,13 @@ in
     fi
   '';
 
+  # Use the upstream release, without the installer's daemon restart.
+  home.activation.installNoMistakes = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    PATH="${lib.makeBinPath [ pkgs.curl pkgs.gawk pkgs.gnutar pkgs.gzip pkgs.coreutils ]}:$PATH" \
+      run ${pkgs.bash}/bin/bash ${./home/install-no-mistakes.sh} \
+      || echo "no-mistakes install failed, rerun the switch to retry"
+  '';
+
   # codex is not in nixpkgs; install it once, then `codex update` keeps it current.
   # ~/.local/bin on PATH stops the installer from appending its PATH block to the managed ~/.zshrc.
   home.activation.installCodex = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -139,6 +146,42 @@ in
     fi
   '';
 
+  # Pi owns its live settings; merge fixed keys without replacing machine-local packages.
+  home.activation.mergePiSettings = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    settings="$HOME/.pi/agent/settings.json"
+    base="${dotfiles}/home/.pi/agent/settings.base.json"
+    merged="$(mktemp)"
+    mkdir -p "$HOME/.pi/agent"
+    if [ -e "$settings" ]; then
+      input="$settings"
+    else
+      input=/dev/null
+    fi
+    ${pkgs.jq}/bin/jq -s '(.[0] // {}) as $live | .[-1] as $base |
+      ($live * $base) | .packages = reduce $base.packages[] as $p
+        ($live.packages // []; if index($p) == null then . + [$p] else . end)' "$input" "$base" > "$merged"
+    if [ -L "$settings" ] || ! cmp -s "$merged" "$settings"; then
+      run mv -f "$merged" "$settings"
+    else
+      rm -f "$merged"
+    fi
+    # Activation has a minimal PATH; mise's environment also supplies Pi's Node runtime.
+    if [ -x "$HOME/.nix-profile/bin/mise" ]; then
+      mise="$HOME/.nix-profile/bin/mise"
+    else
+      mise="$(command -v mise || true)"
+    fi
+    if [ -n "$mise" ] && "$mise" which pi >/dev/null 2>&1; then
+      run "$mise" exec -- pi update --extensions || echo "Pi extension update failed, rerun the switch to retry"
+    elif [ -x "$HOME/.local/share/mise/shims/pi" ]; then
+      PATH="$HOME/.local/share/mise/shims:$PATH" run "$HOME/.local/share/mise/shims/pi" update --extensions || echo "Pi extension update failed, rerun the switch to retry"
+    elif command -v pi >/dev/null 2>&1; then
+      run pi update --extensions || echo "Pi extension update failed, rerun the switch to retry"
+    else
+      echo "Pi not found, install it with mise and rerun the switch to install extensions"
+    fi
+  '';
+
   # ~/.config/herdr used to link the whole dir; home-manager won't drop that link on its own
   # and would write config.toml's link through it into the repo, a symlink loop.
   home.activation.unlinkHerdrDir = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
@@ -163,7 +206,7 @@ in
   home.file.".codex/AGENTS.md".source = link "AGENTS.md";
   home.file.".pi/agent/AGENTS.md".source = link "AGENTS.md";
 
-  # Pi footer/statusline + prompt rail. Select the theme in ~/.pi/agent/settings.json ("theme": "tokyo-quota").
+  # Pi footer/statusline + prompt rail; the theme is set by mergePiSettings.
   home.file.".pi/agent/extensions/footer.ts".source = link ".pi/agent/extensions/footer.ts";
   home.file.".pi/agent/themes/tokyo-quota.json".source = link ".pi/agent/themes/tokyo-quota.json";
   # Transcript display: thinking rail, code frame, session header/prompt (needs `quietStartup: true`, see README).
