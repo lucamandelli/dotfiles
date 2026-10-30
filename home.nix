@@ -166,6 +166,12 @@ in
   # Pi footer/statusline + prompt rail. Select the theme in ~/.pi/agent/settings.json ("theme": "tokyo-quota").
   home.file.".pi/agent/extensions/footer.ts".source = link ".pi/agent/extensions/footer.ts";
   home.file.".pi/agent/themes/tokyo-quota.json".source = link ".pi/agent/themes/tokyo-quota.json";
+  # Transcript display: thinking rail, code panel, session header/prompt (needs `quietStartup: true`, see README).
+  home.file.".pi/agent/extensions/thinking-rail.ts".source = link ".pi/agent/extensions/thinking-rail.ts";
+  home.file.".pi/agent/extensions/code-box.ts".source = link ".pi/agent/extensions/code-box.ts";
+  home.file.".pi/agent/extensions/session-chrome.ts".source = link ".pi/agent/extensions/session-chrome.ts";
+  # Config for the pi-cc-extensions package (tool rows only; its footer/editor/header are off).
+  home.file.".pi/agent/pi-cc-extensions.json".source = link ".pi/agent/pi-cc-extensions.json";
 
   # Global Pi MCP config (Playwright, headless). Symlinked so `pi mcp add` and /mcp edits write back here. No credentials.
   home.file.".pi/agent/mcp.json".source = link ".pi/agent/mcp.json";
