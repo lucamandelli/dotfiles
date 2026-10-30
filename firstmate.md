@@ -19,7 +19,7 @@ Follow the private home README for the complete first-time setup.
 
 ## New machine, including Mac
 
-1. Set up these dotfiles and run `mise install` as in the [README](README.md#usage). They provide Pi and Node via mise, `jq` and Herdr; Git and authenticated `gh` are also needed. The rebuild merges Pi's `quietStartup`, theme and `pi-cc-extensions` settings into its machine-local settings.
+1. Set up these dotfiles as in the [README](README.md#usage). They provide Pi and Node via mise, `jq` and Herdr; Git and authenticated `gh` are also needed. The rebuild merges Pi's `quietStartup`, theme and `pi-cc-extensions` settings into its machine-local settings.
 2. Clone Firstmate and authenticate GitHub, following its [quick start](https://github.com/kunchenguid/firstmate#install-and-launch):
 
    ```sh
