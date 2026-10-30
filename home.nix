@@ -165,20 +165,14 @@ in
     else
       rm -f "$merged"
     fi
-    # Activation has a minimal PATH; mise's environment also supplies Pi's Node runtime.
-    if [ -x "$HOME/.nix-profile/bin/mise" ]; then
-      mise="$HOME/.nix-profile/bin/mise"
+    # Bootstrap Node first so npm-backed tools work even on a fresh machine.
+    # Use the store path: nix-darwin does not necessarily have ~/.nix-profile.
+    mise=${config.programs.mise.package}/bin/mise
+    export PATH="${lib.makeBinPath [ config.programs.mise.package pkgs.bash pkgs.coreutils pkgs.curl pkgs.git pkgs.gnutar pkgs.gzip pkgs.xz pkgs.unzip ]}:$PATH"
+    if run "$mise" install node && run "$mise" exec node -- "$mise" install; then
+      run "$mise" exec -- pi update --extensions || echo "Pi extension update failed, rerun ./rebuild.sh to retry"
     else
-      mise="$(command -v mise || true)"
-    fi
-    if [ -n "$mise" ] && "$mise" which pi >/dev/null 2>&1; then
-      run "$mise" exec -- pi update --extensions || echo "Pi extension update failed, rerun the switch to retry"
-    elif [ -x "$HOME/.local/share/mise/shims/pi" ]; then
-      PATH="$HOME/.local/share/mise/shims:$PATH" run "$HOME/.local/share/mise/shims/pi" update --extensions || echo "Pi extension update failed, rerun the switch to retry"
-    elif command -v pi >/dev/null 2>&1; then
-      run pi update --extensions || echo "Pi extension update failed, rerun the switch to retry"
-    else
-      echo "Pi not found, install it with mise and rerun the switch to install extensions"
+      echo "mise install failed, rerun ./rebuild.sh to retry"
     fi
   '';
 

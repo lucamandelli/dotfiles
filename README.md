@@ -31,10 +31,9 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
 git clone https://github.com/lucamandelli/dotfiles.git ~/github/lucamandelli/dotfiles
 cd ~/github/lucamandelli/dotfiles
 ./rebuild.sh
-mise install
 ```
 
-Needs Nix (Determinate installer) first, plus nix-darwin on the Mac.
+Needs Nix (Determinate installer) first, plus nix-darwin on the Mac. Rebuild installs the configured mise tools automatically; rerun it if installation fails.
 Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
 
 ## Firstmate
