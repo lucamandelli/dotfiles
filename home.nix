@@ -109,6 +109,13 @@ in
     fi
   '';
 
+  # Use the upstream release, without the installer's daemon restart.
+  home.activation.installNoMistakes = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    PATH="${lib.makeBinPath [ pkgs.curl pkgs.gawk pkgs.gnutar pkgs.gzip pkgs.coreutils ]}:$PATH" \
+      run ${pkgs.bash}/bin/bash ${./home/install-no-mistakes.sh} \
+      || echo "no-mistakes install failed, rerun the switch to retry"
+  '';
+
   # codex is not in nixpkgs; install it once, then `codex update` keeps it current.
   # ~/.local/bin on PATH stops the installer from appending its PATH block to the managed ~/.zshrc.
   home.activation.installCodex = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
