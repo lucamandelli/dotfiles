@@ -36,6 +36,10 @@ mise install
 Needs Nix (Determinate installer) first, plus nix-darwin on the Mac.
 Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
 
+## Firstmate
+
+See [firstmate.md](firstmate.md) for the isolated setup and machine sync.
+
 ## Global agent skills
 
 `home/skills.nix` links each skill into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Upstream sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` from the Hunk input (refreshed on rebuild). Personal skills live in `home/skills/<name>/` and are listed in the same set. The unmanaged `no-mistakes` skill and Claude's `synced/` dir sit alongside.
