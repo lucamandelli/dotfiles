@@ -1,7 +1,7 @@
 {
   "quietStartup": true,
   "theme": "tokyo-quota",
-  "packages": ["npm:pi-cc-extensions", "npm:pi-claude-auth"],
+  "packages": ["npm:pi-cc-extensions", "npm:pi-claude-auth", "npm:@plannotator/pi-extension"],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",
   "enabledModels": [

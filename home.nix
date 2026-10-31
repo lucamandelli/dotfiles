@@ -210,6 +210,6 @@ in
   # Config for the pi-cc-extensions package (tool rows only; its footer/editor/header are off).
   home.file.".pi/agent/pi-cc-extensions.json".source = link ".pi/agent/pi-cc-extensions.json";
 
-  # Global Pi MCP config (Playwright, headless). Symlinked so `pi mcp add` and /mcp edits write back here. No credentials.
+  # Global Pi MCP config (Context7 and headless Playwright). Symlinked so `pi mcp add` and /mcp edits write back here. No credentials.
   home.file.".pi/agent/mcp.json".source = link ".pi/agent/mcp.json";
 }
