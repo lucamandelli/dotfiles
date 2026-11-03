@@ -4,7 +4,7 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
 
 ## What it sets up
 
-- Both: zsh (autosuggestions, syntax highlighting, menu completion, shared history), starship,
+- Both: gh-stack (GitHub stacked PRs and agent skill), zsh (autosuggestions, syntax highlighting, menu completion, shared history), starship,
   neovim (LazyVim starter) with ripgrep and fd, mise (Node, Python, Bun, pi, gh-axi,
   chrome-devtools-axi, lavish-axi, quota-axi, tasks-axi), herdr, Herdr app, grok, codex, no-mistakes,
   Hunk (live agent review) and tuicr (PR review),
@@ -44,7 +44,7 @@ See [firstmate.md](firstmate.md) for the isolated setup and machine sync.
 
 ## Global agent skills
 
-`home/skills.nix` links each skill into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Upstream sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` from the Hunk input (refreshed on rebuild). Personal skills live in `home/skills/<name>/` and are listed in the same set. The `no-mistakes` skill and Claude's `synced/` dir sit alongside, unmanaged by home-manager.
+`home/skills.nix` links each skill into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Upstream sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` and `gh-stack` from their respective inputs (refreshed on rebuild). Personal skills live in `home/skills/<name>/` and are listed in the same set. The `no-mistakes` skill and Claude's `synced/` dir sit alongside, unmanaged by home-manager.
 
 - Add an upstream skill: put `name = "${src}/path/to/skill-dir";` in the `skills` set (name must match the skill's `name:` and not collide). Link the whole dir, so bundled files travel. Check the skill has no `../` references to repo-level files, and add any skills it depends on. For a new source, add a `flake = false` input in `flake.nix`.
 - Add a personal skill: create `home/skills/<name>/` (self-contained, no `../` references) and add `name = ./skills/<name>;`. The directory name, the attr name, and `name:` must match.
@@ -199,6 +199,7 @@ Log out and back in afterwards: zsh, the docker group and the GNOME extensions o
 - Existing files in the way of a symlink are renamed to `*.backup`.
 - `ccd` alias runs `claude --dangerously-skip-permissions`; `ccr` runs `claude --resume`.
 - Ubuntu: `~/.local/bin/sudo` wraps sudo so that without a terminal (coding agents) it runs `sudo -A`, and a zenity dialog shows the command and asks for the password.
+- gh-stack: each switch installs or upgrades the latest GitHub CLI extension release; rebuild refreshes the skill source on both platforms. The extension is not in nixpkgs, so activation uses `gh extension` rather than building it on the Intel Mac. It needs authenticated `gh` and Git 2.36+: Git is managed by home-manager, and `gh auth login` is per machine. Extension releases and the skill's upstream default branch may advance independently. Network access is required; rerun the switch if installation or upgrade fails.
 - herdr is installed once by the switch; `herdr update` keeps it current.
 - Herdr app is installed once by the switch on Linux and Apple silicon Macs; it updates itself and herdr-core. Upstream does not support Intel Macs, so installation there fails without affecting the switch. The `herdr-app` and `herdr-core` skills use the installed versions' live documentation.
 - grok is installed once by the switch (`~/.grok/bin`, added to PATH here); `grok update` keeps it current. Run `grok login` once per machine.

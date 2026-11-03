@@ -5,8 +5,9 @@ ln -sfn "$DIR" ~/.dotfiles
 
 # A shell opened before Nix was installed doesn't have it on PATH yet.
 command -v nix >/dev/null || . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-# Keep review tools current without updating the host or global skill inputs.
-# Linux only: the Mac installs release binaries instead of building them (see home/review-tools-mac.nix).
+# Refresh the gh-stack skill on both platforms; the extension upgrades during activation.
+nix flake update --flake "$DIR" gh-stack
+# Linux only: the Mac installs release binaries instead of building review tools.
 [ "$(uname -s)" = Darwin ] || nix flake update --flake "$DIR" hunk tuicr
 
 if [ "$(uname -s)" = Darwin ]; then

@@ -118,6 +118,22 @@
         "type": "github"
       }
     },
+    "gh-stack": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793057232,
+        "narHash": "sha256-dENuxVuz68Y7P8WW5C7pzVbfJRxGMGIKQ2AnWrTacOs=",
+        "owner": "github",
+        "repo": "gh-stack",
+        "rev": "2a49e6751238633db504655d8a8eba3e433e827d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "github",
+        "repo": "gh-stack",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -305,6 +321,7 @@
       "inputs": {
         "addy-skills": "addy-skills",
         "cursor-plugins": "cursor-plugins",
+        "gh-stack": "gh-stack",
         "home-manager": "home-manager",
         "hunk": "hunk",
         "mattpocock-skills": "mattpocock-skills",

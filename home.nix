@@ -90,6 +90,15 @@ in
   # Node, Python, Bun and pi; versions live in home/.config/mise/config.toml.
   programs.mise.enable = true;
 
+  # gh-stack is not packaged in nixpkgs. Install or upgrade its latest release on each switch.
+  home.activation.installGhStack = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ -d "''${XDG_DATA_HOME:-$HOME/.local/share}/gh/extensions/gh-stack" ]; then
+      run ${pkgs.gh}/bin/gh extension upgrade stack || echo "gh-stack upgrade failed, rerun the switch to retry"
+    else
+      run ${pkgs.gh}/bin/gh extension install github/gh-stack || echo "gh-stack install failed, rerun the switch to retry"
+    fi
+  '';
+
   # herdr is not in nixpkgs; install it once, then `herdr update` keeps it current.
   home.activation.installHerdr = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -x "$HOME/.local/bin/herdr" ]; then
