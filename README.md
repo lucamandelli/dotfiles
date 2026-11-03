@@ -36,6 +36,8 @@ cd ~/github/lucamandelli/dotfiles
 Needs Nix (Determinate installer) first, plus nix-darwin on the Mac. Rebuild installs the configured mise tools automatically; rerun it if installation fails.
 Only rerun `./rebuild.sh` for changes that are not plain symlinked files.
 
+Before the first switch with the managed no-mistakes config, compare `~/.no-mistakes/config.yaml` with `home/.no-mistakes/config.yaml`. Preserve any local changes you need, then move the existing file aside (for example, `mv ~/.no-mistakes/config.yaml ~/.no-mistakes/config.yaml.before-dotfiles`). Do this even if the files are identical: home-manager otherwise skips the link. The switch links the versioned file on both platforms.
+
 ## Firstmate
 
 See [firstmate.md](firstmate.md) for the isolated setup and machine sync.
@@ -200,6 +202,6 @@ Log out and back in afterwards: zsh, the docker group and the GNOME extensions o
 - herdr is installed once by the switch; `herdr update` keeps it current.
 - grok is installed once by the switch (`~/.grok/bin`, added to PATH here); `grok update` keeps it current. Run `grok login` once per machine.
 - codex is installed once by the switch (`~/.local/bin/codex`); `codex update` keeps it current. Run `codex login` once per machine.
-- no-mistakes uses the upstream release binary in `~/.no-mistakes/bin`, linked from `~/.local/bin`. The switch bootstraps missing skills from the installed release in both agent skill directories; existing binaries and skill directories are left untouched. `no-mistakes init` refreshes the skills when setting up a repository. `no-mistakes update` updates the binary and restarts its daemon, so coordinate with other users of that daemon first. The upstream installer also restarts the daemon, so the switch downloads the release directly instead. No cleanup is needed for existing no-mistakes installs or real skill directories.
+- no-mistakes uses the latest upstream release binary in `~/.no-mistakes/bin`, linked from `~/.local/bin`. Each switch checks for updates without restarting the daemon; an existing daemon keeps running its old version until restarted. Coordinate daemon restarts with other users. The switch bootstraps missing skills from the installed release; `no-mistakes init` refreshes them. The linked `home/.no-mistakes/config.yaml` includes Hality repository overrides and requires no-mistakes v1.102 or newer. If `~/.local/bin/no-mistakes` already points elsewhere, point it at the managed binary.
 - `~/.claude/settings.json` is not a symlink: the switch merges `home/.claude/settings.base.json` over it, so plugins and model changed by Claude Code stay out of git. Removing a key from the base does not remove it from the live file.
 - First `nvim` launch installs LazyVim plugins (needs network once).

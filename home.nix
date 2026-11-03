@@ -194,6 +194,7 @@ in
   home.file.".config/starship.toml".source = link ".config/starship.toml";
   home.file.".config/herdr/config.toml".source = link ".config/herdr/config.toml";  # file only: the dir holds runtime state
   home.file.".claude/statusline.sh".source = link ".claude/statusline.sh";
+  home.file.".no-mistakes/config.yaml".source = link ".no-mistakes/config.yaml";
 
   # One source of truth for global agent rules.
   home.file.".claude/CLAUDE.md".source = link "AGENTS.md";
