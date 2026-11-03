@@ -39,6 +39,8 @@ let
     typescript-best-practices = typescriptSkill;
     # personal
     firstmate-home-sync = ./skills/firstmate-home-sync;
+    herdr-app = ./skills/herdr-app;
+    herdr-core = ./skills/herdr-core;
   };
 in
 

@@ -99,6 +99,15 @@ in
     fi
   '';
 
+  # Install once; the app updates itself and herdr-core.
+  home.activation.installHerdrApp = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if ${if pkgs.stdenv.isDarwin then ''[ ! -d "$HOME/Applications/Herdr.app" ] && [ ! -d /Applications/Herdr.app ]'' else ''[ ! -d "''${XDG_DATA_HOME:-$HOME/.local/share}/herdr-app" ]''}; then
+      PATH="$HOME/.local/bin:${lib.makeBinPath [ pkgs.curl pkgs.gnutar pkgs.gzip pkgs.gnused pkgs.gnugrep pkgs.coreutils ]}:$PATH" \
+        run ${pkgs.bash}/bin/bash -o pipefail -c '${pkgs.curl}/bin/curl -fsSL https://releases.herdr.dev/app/install.sh | sh' \
+        || echo "Herdr app install failed, rerun the switch to retry"
+    fi
+  '';
+
   # grok is not in nixpkgs; install it once, then `grok update` keeps it current.
   # SHELL=sh stops the installer from appending its PATH block to the managed ~/.zshrc.
   home.activation.installGrok = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
