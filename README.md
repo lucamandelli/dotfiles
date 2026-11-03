@@ -6,7 +6,7 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
 
 - Both: zsh (autosuggestions, syntax highlighting, menu completion, shared history), starship,
   neovim (LazyVim starter) with ripgrep and fd, mise (Node, Python, Bun, pi, gh-axi,
-  chrome-devtools-axi, lavish-axi, quota-axi, tasks-axi), herdr, grok, codex, no-mistakes,
+  chrome-devtools-axi, lavish-axi, quota-axi, tasks-axi), herdr, Herdr app, grok, codex, no-mistakes,
   Hunk (live agent review) and tuicr (PR review),
   JetBrains Mono Nerd Font, Ghostty config, Claude settings (merged, not linked) and one shared `home/AGENTS.md`
 - Mac only: macOS defaults and Homebrew casks via `configuration.nix` (1Password CLI, Cursor, Ghostty, Grok Bot)
@@ -200,6 +200,7 @@ Log out and back in afterwards: zsh, the docker group and the GNOME extensions o
 - `ccd` alias runs `claude --dangerously-skip-permissions`; `ccr` runs `claude --resume`.
 - Ubuntu: `~/.local/bin/sudo` wraps sudo so that without a terminal (coding agents) it runs `sudo -A`, and a zenity dialog shows the command and asks for the password.
 - herdr is installed once by the switch; `herdr update` keeps it current.
+- Herdr app is installed once by the switch on Linux and Apple silicon Macs; it updates itself and herdr-core. Upstream does not support Intel Macs, so installation there fails without affecting the switch. The `herdr-app` and `herdr-core` skills use the installed versions' live documentation.
 - grok is installed once by the switch (`~/.grok/bin`, added to PATH here); `grok update` keeps it current. Run `grok login` once per machine.
 - codex is installed once by the switch (`~/.local/bin/codex`); `codex update` keeps it current. Run `codex login` once per machine.
 - no-mistakes uses the latest upstream release binary in `~/.no-mistakes/bin`, linked from `~/.local/bin`. Each switch checks for updates without restarting the daemon; an existing daemon keeps running its old version until restarted. Coordinate daemon restarts with other users. The switch bootstraps missing skills from the installed release; `no-mistakes init` refreshes them. The linked `home/.no-mistakes/config.yaml` includes Hality repository overrides and requires no-mistakes v1.102 or newer. If `~/.local/bin/no-mistakes` already points elsewhere, point it at the managed binary.
