@@ -6,24 +6,30 @@ link="$HOME/.local/bin/no-mistakes"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-if [ ! -x "$bin" ] && [ ! -x "$link" ]; then
+latest=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/kunchenguid/no-mistakes/releases/latest)
+version=${latest##*/}
+case "$version" in v[0-9]*) ;; *) echo "no-mistakes: invalid release URL: $latest" >&2; exit 1 ;; esac
+installed=$([ ! -x "$bin" ] || "$bin" --version | awk '{print $3}')
+if [ "$installed" != "$version" ]; then
   case "$(uname -s)-$(uname -m)" in
     Linux-x86_64) platform=linux-amd64 ;;
     Darwin-x86_64) platform=darwin-amd64 ;;
     *) echo "no-mistakes: unsupported platform" >&2; exit 1 ;;
   esac
-  latest=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/kunchenguid/no-mistakes/releases/latest)
-  version=${latest##*/}
-  case "$version" in v[0-9]*) ;; *) echo "no-mistakes: invalid release URL: $latest" >&2; exit 1 ;; esac
   curl -fsSL "https://github.com/kunchenguid/no-mistakes/releases/download/$version/no-mistakes-$version-$platform.tar.gz" -o "$tmp/release.tar.gz"
   tar xzf "$tmp/release.tar.gz" -C "$tmp"
   mkdir -p "$(dirname "$bin")"
-  install -m 755 "$tmp/no-mistakes" "$bin"
+  # Replace atomically so a running daemon keeps its existing executable.
+  install -m 755 "$tmp/no-mistakes" "$bin.new"
+  mv -f "$bin.new" "$bin"
 fi
 
 if [ -x "$bin" ] && [ ! -e "$link" ] && [ ! -L "$link" ]; then
   mkdir -p "$(dirname "$link")"
   ln -s "$bin" "$link"
+elif [ "$(readlink "$link" 2>/dev/null || true)" != "$bin" ]; then
+  echo "no-mistakes: $link already exists; point it at $bin to use the managed release" >&2
+  exit 1
 fi
 
 # The upstream init command owns and refreshes these files. Only bootstrap missing
