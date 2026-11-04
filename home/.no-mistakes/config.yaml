@@ -9,7 +9,35 @@
 # "devin" is an ACP alias for acp:devin using devin acp via acpx
 # "acp:devin" also uses that Devin default command
 # Use acp:<target> to run an optional user-installed acpx target, for example acp:gemini
-agent: auto
+agent: [claude, codex, grok]
+
+# Main-chain model and effort per agent (every non-review step and the review
+# fixer). quota_routing below picks the head agent per run by quota-axi.
+agent_config:
+  claude:
+    model: claude-sonnet-5-5
+    effort: medium
+  codex:
+    model: gpt-6.1-terra
+    effort: medium
+  grok:
+    model: grok-4.7
+    effort: medium
+    quota_provider: grok
+
+# Strong reviewer; fallback advances only on provider quota exhaustion.
+# The fixer is omitted on purpose so it uses the quota-routed main chain.
+review_agents:
+  reviewer:
+    agent: claude
+    model: claude-opus-5-5
+    effort: high
+    fallback:
+      - {agent: codex, model: gpt-6.1-sol, effort: high}
+      - {agent: grok, model: grok-4.7, effort: high}
+
+quota_routing:
+  enabled: true
 
 # Optional path to the user-installed acpx binary for acp:<target> agents and ACP aliases
 # acpx_path: acpx
