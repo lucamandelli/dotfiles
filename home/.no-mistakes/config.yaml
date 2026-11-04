@@ -246,16 +246,3 @@ eval:
 #     draft_pull_requests: true
 #   azuredevops:
 #     draft_pull_requests: true
-
-# Hality team repos: pipeline fix commits must not name the pipeline (captain, 2026-11-03).
-repository_overrides:
-  https://github.com/Hality-CYB/Hality-Back-End.git:
-    commit:
-      fix_message: "fix: {{.Summary}}"
-    pr:
-      appendix: minimal
-  https://github.com/Hality-CYB/Hality-Front-End.git:
-    commit:
-      fix_message: "fix: {{.Summary}}"
-    pr:
-      appendix: minimal
