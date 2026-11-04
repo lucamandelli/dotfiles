@@ -121,11 +121,11 @@
     "gh-stack": {
       "flake": false,
       "locked": {
-        "lastModified": 1793057232,
-        "narHash": "sha256-dENuxVuz68Y7P8WW5C7pzVbfJRxGMGIKQ2AnWrTacOs=",
+        "lastModified": 1793730790,
+        "narHash": "sha256-HJiO7w03capDX2qCmvmXb80KdgtLTB3d2CXq0yYWqDc=",
         "owner": "github",
         "repo": "gh-stack",
-        "rev": "2a49e6751238633db504655d8a8eba3e433e827d",
+        "rev": "bd0a32504f9ae9f795875a9e6bb90ff7408fda08",
         "type": "github"
       },
       "original": {
