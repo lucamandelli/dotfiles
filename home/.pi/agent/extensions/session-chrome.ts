@@ -32,9 +32,14 @@ const BG = /\x1b\[(?:48;[0-9;]+|49)m/g;
 const BAR = "\x1b[38;2;125;207;255m▌\x1b[39m"; // #7dcfff, same cyan as the cwd in the footer
 
 // Patch state lives on globalThis so /reload (new module instance) and other packages wrapping the same
-// prototype method cannot stack a second copy: the wrapper stays installed and is only switched on/off.
-const KEY = Symbol.for("dotfiles.pi.session-chrome");
-type State = { active: boolean; theme?: Theme; original?: Function; patched?: Function };
+// prototype method cannot stack a second copy. The wrapper installed once only delegates to `state.render`,
+// which every session_start replaces with the current code, so a /reload picks up edits (a wrapper that kept
+// its own closure would keep running the code of the first load). OLD_KEY is the first version of this patch
+// (a chevron, closure-bound): switch it off so a still-installed old wrapper passes through.
+const KEY = Symbol.for("dotfiles.pi.session-chrome.bar");
+const OLD_KEY = Symbol.for("dotfiles.pi.session-chrome");
+type Render = (self: any, width: number, original: Function) => string[];
+type State = { active: boolean; theme?: Theme; original?: Function; patched?: Function; render?: Render };
 const state = ((globalThis as any)[KEY] ??= { active: false }) as State;
 
 function uninstall() {
@@ -46,32 +51,38 @@ function uninstall() {
 	}
 }
 
+const barRender: Render = (self, width, original) => {
+	const inner = original.call(self, width - 3) as string[];
+	if (!Array.isArray(inner) || inner.some((l) => typeof l !== "string")) return original.call(self, width);
+	// drop the padding rows Markdown adds (paddingY=1), keeping the OSC 133 prompt-zone marks they carry
+	const blank = (l: string) => l.replace(STRIP, "").trim() === "";
+	const zone = (l: string) => l.match(OSC)?.[1] ?? "";
+	const dropFirst = blank(inner[0]!) && inner.length > 2;
+	const dropLast = blank(inner[inner.length - 1]!) && inner.length > 2;
+	const body = inner.slice(dropFirst ? 1 : 0, dropLast ? -1 : undefined);
+	const head = dropFirst ? zone(inner[0]!) : "";
+	const tail = dropLast ? zone(inner[inner.length - 1]!) : "";
+	return body.map((l, i) => {
+		const osc = zone(l);
+		const rest = l.slice(osc.length).replace(BG, "").replace(/^((?:\x1b\[[0-9;]*m)*) /, "$1");
+		return `${i === 0 ? head : ""}${osc} ${BAR} ${rest}${i === body.length - 1 ? tail : ""}`;
+	});
+};
+
 function installUserBar(theme: Theme) {
 	const proto = UserMessageComponent?.prototype as any;
 	if (typeof proto?.render !== "function") return;
+	const old = (globalThis as any)[OLD_KEY];
+	if (old) old.active = false;
 	state.theme = theme;
+	state.render = barRender;
 	state.active = true;
 	if (state.patched) return;
 	const original = proto.render as Function;
 	const patched = function (this: any, width: number): string[] {
-		const t = state.theme;
-		if (!state.active || !t || width < 12) return original.call(this, width);
+		if (!state.active || !state.theme || !state.render || width < 12) return original.call(this, width);
 		try {
-			const inner = original.call(this, width - 3) as string[];
-			if (!Array.isArray(inner) || inner.some((l) => typeof l !== "string")) return original.call(this, width);
-			// drop the padding rows Markdown adds (paddingY=1), keeping the OSC 133 prompt-zone marks they carry
-			const blank = (l: string) => l.replace(STRIP, "").trim() === "";
-			const zone = (l: string) => l.match(OSC)?.[1] ?? "";
-			const dropFirst = blank(inner[0]!) && inner.length > 2;
-			const dropLast = blank(inner[inner.length - 1]!) && inner.length > 2;
-			const body = inner.slice(dropFirst ? 1 : 0, dropLast ? -1 : undefined);
-			const head = dropFirst ? zone(inner[0]!) : "";
-			const tail = dropLast ? zone(inner[inner.length - 1]!) : "";
-			return body.map((l, i) => {
-				const osc = zone(l);
-				const rest = l.slice(osc.length).replace(BG, "").replace(/^((?:\x1b\[[0-9;]*m)*) /, "$1");
-				return `${i === 0 ? head : ""}${osc} ${BAR} ${rest}${i === body.length - 1 ? tail : ""}`;
-			});
+			return state.render(this, width, original);
 		} catch {
 			return original.call(this, width);
 		}
