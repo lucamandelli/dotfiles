@@ -14,3 +14,7 @@ uv = "latest"
 [env]
 # pi-claude-auth pins Claude Code 2.1.160; newer models need >= 2.1.280
 ANTHROPIC_CLI_VERSION = "2.1.280"
+
+[settings]
+# Respect .nvmrc / .node-version in projects (e.g. Hality pins Node 20)
+idiomatic_version_file_enable_tools = ["node"]
