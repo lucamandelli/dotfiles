@@ -16,6 +16,11 @@ const HEX = {
 	grok: "#c0caf5",
 } as const;
 
+// A Firstmate worker pane (FM_TASK_ID is set on every ship/scout launch) is read by Firstmate's watcher,
+// which hashes the pane to tell a quiet worker from a busy one. A quota row there changes the pane whenever
+// a reading changes, so worker panes draw only the static first row and start no timers.
+const FIRSTMATE_WORKER = Boolean(process.env.FM_TASK_ID);
+
 const REFRESH_MS = 60_000;
 const MAX_AGE = "45s"; // quota-axi serves a reading younger than this; keeps the worst-case lag under 2 minutes
 const STALE_MS = 3 * 60_000;
@@ -233,7 +238,7 @@ export function renderFooter(t: Theme, i: FooterInput, width: number): string[] 
 	if (width < 1) return [];
 	let last: string[] = [];
 	for (const lv of LEVELS) {
-		last = [line1(t, i, lv, width), line2(t, i, lv)];
+		last = FIRSTMATE_WORKER ? [line1(t, i, lv, width)] : [line1(t, i, lv, width), line2(t, i, lv)];
 		if (last.every((l) => visibleWidth(l) <= width)) return last;
 	}
 	return last.map((l) => truncateToWidth(l, width));
@@ -283,9 +288,11 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", (_e, c) => {
 		stop();
 		ctx = c;
-		refreshQuota();
-		// Reset times are fixed clock times, so nothing needs a per-tick redraw; a render follows each refresh.
-		timers.push(setInterval(refreshQuota, REFRESH_MS));
+		if (!FIRSTMATE_WORKER) {
+			refreshQuota();
+			// Reset times are fixed clock times, so nothing needs a per-tick redraw; a render follows each refresh.
+			timers.push(setInterval(refreshQuota, REFRESH_MS));
+		}
 		for (const t of timers) t.unref?.();
 
 		c.ui.setFooter((tui, theme, footerData) => {
