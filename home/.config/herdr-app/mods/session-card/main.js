@@ -4,10 +4,16 @@
 import { View, div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { PathBuilder } from "gpui-kit";
-import { panes, theme } from "herdr";
+import { panes, shared, spaces, theme } from "herdr";
 import { EFFORT_COLOR, KEY_COLOR, PROVIDERS, focusedTerminal, formatTokens, providerKeyOf, sessionOf, shortModel } from "./pi-session.js";
 
-const SIZE = 112;
+const SIZE = 96;
+// The spaces sidebar's colour marks (shared "space.colors" holds the ansi name per space; default teal).
+const MARK = { ansi6: "#22a99a", ansi3: "#e3814f", ansi4: "#5b8def", ansi5: "#8b7cf6", ansi2: "#3fae6a", ansi1: "#d9649a" };
+function spaceColor(tabId) {
+  const space = spaces().find((x) => x.tabs.some((t) => t.id === tabId));
+  return MARK[(shared("space.colors") ?? {})[space?.id] ?? "ansi6"] ?? MARK.ansi6;
+}
 const STROKE = 9;
 const START = 135; // degrees, clockwise from 3 o'clock: the gauge opens at the bottom
 const SWEEP = 270;
@@ -30,7 +36,7 @@ function gauge(t, pct, tokens, window) {
   if (used > 0) el.child(arc(color, START, START + Math.max(2, (SWEEP * used) / 100)));
   return el.child(
     v_flex().absolute().size_full().items_center().justify_center()
-      .child(div().text_size(22).font_bold().text_color(t.foreground).child(pct == null ? "?" : `${Math.round(pct)}%`))
+      .child(div().text_size(19).font_bold().text_color(t.foreground).child(pct == null ? "?" : `${Math.round(pct)}%`))
       .child(div().text_size(11).text_color(t.muted).child(`${formatTokens(tokens)}/${formatTokens(window)}`))
       .child(div().text_size(10).text_color(t.dim).child("tokens")),
   );
@@ -51,7 +57,6 @@ export default class SessionCard extends View {
     const color = (s?.provider && PROVIDERS[s.provider]?.color) || KEY_COLOR[key] || t.foreground;
     const agent = pane?.program?.name ?? "Terminal";
     const leaf = pane?.cwd ? pane.cwd.replace(/\/+$/, "").split("/").pop() || "/" : "";
-    const where = () => div().truncate().text_size(12).font_semibold().text_color(t.accent).child(leaf);
 
     const body = s
       ? v_flex().flex_1().min_w(0).gap(3)
@@ -59,16 +64,20 @@ export default class SessionCard extends View {
           .child(div().truncate().text_size(19).font_bold().text_color(color).child(shortModel(s.model)))
           .child(h_flex().child(div().px(7).h(20).flex().items_center().rounded(5).text_size(11.5).font_semibold()
             .bg((EFFORT_COLOR[s.effort] ?? t.muted) + "30").text_color(EFFORT_COLOR[s.effort] ?? t.muted).child(`effort ${s.effort}`)))
-          .when(Boolean(leaf), (el) => el.child(where()))
       : v_flex().flex_1().min_w(0).gap(3)
           .child(div().truncate().text_size(19).font_bold().text_color(color).child(agent))
-          .child(div().text_size(11).text_color(t.dim).child(key ? `${key} · no model data` : "no model data"))
-          .when(Boolean(leaf), (el) => el.child(where()));
+          .child(div().text_size(11).text_color(t.dim).child(key ? `${key} · no model data` : "no model data"));
 
+    // Title: the folder of the focused session, so it is obvious which agent the card describes.
+    const title = h_flex().w_full().flex_none().gap(7).items_center().pb(5).border_b(1).border_color(t.border)
+      .child(div().size(8).rounded(4).flex_none().bg(spaceColor(pane?.tab)))
+      .child(div().truncate().text_size(15).font_bold().text_color(t.foreground).child(leaf || agent));
     return div().size_full().p(8).child(
-      h_flex().size_full().items_center().gap(10).px(10).rounded(9).bg(t.surface).border(1).border_color(t.border)
-        .when(Boolean(s), (el) => el.child(gauge(t, s.pct, s.tokens, s.window)))
-        .child(body),
+      v_flex().size_full().px(10).py(7).rounded(9).bg(t.surface).border(1).border_color(t.border)
+        .child(title)
+        .child(h_flex().w_full().flex_1().items_center().gap(10).pt(8)
+          .when(Boolean(s), (el) => el.child(gauge(t, s.pct, s.tokens, s.window)))
+          .child(body)),
     );
   }
 }

@@ -42,7 +42,7 @@
           "id": "session-card",
           "type": "block",
           "size": {
-            "px": 150
+            "px": 168
           },
           "content": {
             "mod": "session-card"
