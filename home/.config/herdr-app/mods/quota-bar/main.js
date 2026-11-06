@@ -3,9 +3,12 @@
 // focused session's provider is highlighted. Replaces workspace-status and keeps its right-hand items.
 import { View, div } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { agents, exec, keys, run, theme, window } from "herdr";
+import { agents, exec, home, keys, run, theme, window } from "herdr";
 import { KEY_COLOR, focusedTerminal, providerKeyOf } from "./pi-session.js";
 
+// The app's exec PATH does not include mise, so try mise's shims dir (same path on Linux and macOS; the shim
+// needs no PATH of its own) and ~/.local/bin before the bare name. The first one that runs is remembered.
+const quotaAxi = () => [`${home()}/.local/share/mise/shims/quota-axi`, `${home()}/.local/bin/quota-axi`, "quota-axi"];
 const REFRESH_MS = 60_000;
 const MAX_AGE = "45s";
 const STALE_MS = 3 * 60_000;
@@ -57,7 +60,16 @@ export default class QuotaBar extends View {
   refresh(cx) {
     cx.spawn(async (cx) => {
       try {
-        const r = await exec("quota-axi", ["--json", "--max-age", MAX_AGE, "--provider", "claude,codex,grok"]);
+        const args = ["--json", "--max-age", MAX_AGE, "--provider", "claude,codex,grok"];
+        let r;
+        for (const bin of this.bin ? [this.bin] : quotaAxi()) {
+          try {
+            r = await exec(bin, args);
+            this.bin = bin;
+            break;
+          } catch {} // not found there: next candidate
+        }
+        if (!r) throw new Error("quota-axi not found");
         const now = Date.now();
         this.quota = parseQuota(JSON.parse(r.stdout), now);
         this.fetchedAt = now;
