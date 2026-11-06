@@ -2,7 +2,8 @@
 node = "lts"
 python = "latest"
 bun = "latest"
-"npm:@earendil-works/pi-coding-agent" = "latest"
+# Pi standalone release binary: embeds its own runtime, immune to project .nvmrc/.node-version.
+"github:earendil-works/pi" = "latest"
 "npm:gh-axi" = "latest"
 "npm:chrome-devtools-axi" = "latest"
 "npm:lavish-axi" = "latest"
