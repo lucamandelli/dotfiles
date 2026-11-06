@@ -1,8 +1,8 @@
-// Footer (Starship-prose statusline with subscription quota used % and local reset times) + C3 "Rail" prompt box.
+// Footer: Starship-prose statusline with subscription quota used % and local reset times.
 // Pairs with themes/tokyo-quota.json. Quota comes from `quota-axi --json`, refreshed off the render path.
 import { execFile } from "node:child_process";
 import { basename } from "node:path";
-import { CustomEditor, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 // ---------------------------------------------------------------- palette
@@ -246,7 +246,6 @@ export function renderFooter(t: Theme, i: FooterInput, width: number): string[] 
 
 // ---------------------------------------------------------------- extension
 export default function (pi: ExtensionAPI) {
-	let ctx: ExtensionContext | undefined;
 	let requestRender: (() => void) | undefined;
 	let quota: QuotaSnapshot | undefined;
 	let quotaFailed = false;
@@ -287,7 +286,6 @@ export default function (pi: ExtensionAPI) {
 
 	pi.on("session_start", (_e, c) => {
 		stop();
-		ctx = c;
 		if (!FIRSTMATE_WORKER) {
 			refreshQuota();
 			// Reset times are fixed clock times, so nothing needs a per-tick redraw; a render follows each refresh.
@@ -323,32 +321,6 @@ export default function (pi: ExtensionAPI) {
 					requestRender = undefined;
 				},
 			};
-		});
-
-		c.ui.setEditorComponent((tui, theme, kb) => {
-			class RailEditor extends CustomEditor {
-				constructor() {
-					super(tui, theme, kb, { paddingX: 0 });
-				}
-				render(width: number): string[] {
-					if (width < 10) return super.render(width);
-					const ui = ctx?.ui.theme;
-					if (!ui) return super.render(width);
-					// rail(1) + pad(1) + prompt prefix(2)
-					const inner = super.render(width - 4);
-					const visible: number = (this as any).renderedVisibleLineCount ?? Math.max(1, inner.length - 2);
-					const body = inner.slice(1, 1 + visible);
-					const extras = inner.slice(2 + visible);
-					const rule = ui.fg("borderMuted", "─".repeat(width));
-					const rail = (this as any).borderColor ? (this as any).borderColor("▎") : ui.fg("borderMuted", "▎");
-					const out = [rule, rail];
-					body.forEach((l, idx) => out.push(`${rail} ${idx === 0 ? ui.fg("borderMuted", "❯ ") : "  "}${l}`));
-					out.push(rail, rule);
-					for (const l of extras) out.push(`    ${l}`);
-					return out;
-				}
-			}
-			return new RailEditor();
 		});
 	});
 }

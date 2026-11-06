@@ -1,7 +1,9 @@
 // Session chrome: Pi logo header (replaces the [Skills]/[Extensions] listing; needs quietStartup: true)
-// and a clean user prompt (accent chevron, no background box; pair with theme userMessageBg "").
-// Header: public API (setHeader). User prompt: wraps private UserMessageComponent.prototype.render,
+// and your own messages marked by a cyan bar on every line (no background).
+// Header: public API (setHeader). User bar: wraps private UserMessageComponent.prototype.render,
 // installed on session_start, restored on session_shutdown, native render if anything looks different.
+// Fallback by design: the theme gives userMessageBg a light tint. The bar render strips that tint; if the
+// patch is off (Pi changed the component), Pi paints the tint and your messages still stand out.
 import { readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
@@ -25,6 +27,9 @@ function extensionNames(): string[] {
 
 const OSC = /^((?:\x1b\]133;[A-Z]\x07)*)/;
 const STRIP = /\x1b\][^\x07]*\x07|\x1b\[[0-9;]*m/g;
+// Background SGR sequences (set and reset): the tinted fallback is removed so the bar is the only marker.
+const BG = /\x1b\[(?:48;[0-9;]+|49)m/g;
+const BAR = "\x1b[38;2;125;207;255m▌\x1b[39m"; // #7dcfff, same cyan as the cwd in the footer
 
 // Patch state lives on globalThis so /reload (new module instance) and other packages wrapping the same
 // prototype method cannot stack a second copy: the wrapper stays installed and is only switched on/off.
@@ -41,7 +46,7 @@ function uninstall() {
 	}
 }
 
-function installUserChevron(theme: Theme) {
+function installUserBar(theme: Theme) {
 	const proto = UserMessageComponent?.prototype as any;
 	if (typeof proto?.render !== "function") return;
 	state.theme = theme;
@@ -54,12 +59,18 @@ function installUserChevron(theme: Theme) {
 		try {
 			const inner = original.call(this, width - 3) as string[];
 			if (!Array.isArray(inner) || inner.some((l) => typeof l !== "string")) return original.call(this, width);
-			// drop the padding rows Markdown adds (paddingY=1)
-			const body = inner.filter((l, i) => !(i === 0 || i === inner.length - 1) || l.replace(STRIP, "").trim() !== "");
+			// drop the padding rows Markdown adds (paddingY=1), keeping the OSC 133 prompt-zone marks they carry
+			const blank = (l: string) => l.replace(STRIP, "").trim() === "";
+			const zone = (l: string) => l.match(OSC)?.[1] ?? "";
+			const dropFirst = blank(inner[0]!) && inner.length > 2;
+			const dropLast = blank(inner[inner.length - 1]!) && inner.length > 2;
+			const body = inner.slice(dropFirst ? 1 : 0, dropLast ? -1 : undefined);
+			const head = dropFirst ? zone(inner[0]!) : "";
+			const tail = dropLast ? zone(inner[inner.length - 1]!) : "";
 			return body.map((l, i) => {
-				const osc = l.match(OSC)?.[1] ?? "";
-				const rest = l.slice(osc.length).replace(/^((?:\x1b\[[0-9;]*m)*) /, "$1");
-				return osc + (i === 0 ? t.fg("accent", " ❯ ") : "   ") + rest;
+				const osc = zone(l);
+				const rest = l.slice(osc.length).replace(BG, "").replace(/^((?:\x1b\[[0-9;]*m)*) /, "$1");
+				return `${i === 0 ? head : ""}${osc} ${BAR} ${rest}${i === body.length - 1 ? tail : ""}`;
 			});
 		} catch {
 			return original.call(this, width);
@@ -72,7 +83,7 @@ function installUserChevron(theme: Theme) {
 
 export default function (pi: ExtensionAPI) {
 	pi.on("session_start", (_e, ctx) => {
-		installUserChevron(ctx.ui.theme);
+		installUserBar(ctx.ui.theme);
 
 		// ---- header (public API)
 		if (ctx.mode !== "tui") return;

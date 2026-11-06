@@ -36,7 +36,7 @@
     "scrollbarThumb": "okhsl(232 7% 65%)",
     "searchMatchBg": "okhsl(53 51% 24%)",
     "searchMatchText": "muted",
-    "userMessageBg": "",
+    "userMessageBg": "#2a2f45",
     "userMessageText": "text",
     "customMessageBg": "okhsl(295 42% 24%)",
     "customMessageText": "muted",
