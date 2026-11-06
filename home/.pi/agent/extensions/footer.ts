@@ -1,7 +1,9 @@
 // Footer: Starship-prose statusline with subscription quota used % and local reset times.
 // Pairs with themes/tokyo-quota.json. Quota comes from `quota-axi --json`, refreshed off the render path.
 import { execFile } from "node:child_process";
-import { basename } from "node:path";
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { basename, join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
@@ -20,6 +22,44 @@ const HEX = {
 // which hashes the pane to tell a quiet worker from a busy one. A quota row there changes the pane whenever
 // a reading changes, so worker panes draw only the static first row and start no timers.
 const FIRSTMATE_WORKER = Boolean(process.env.FM_TASK_ID);
+
+// Inside the Herdr app with the `pi` layout, the quota bar and session mods show everything this footer does,
+// so the footer draws nothing (and skips quota-axi). Detected from the app session, not the OS: the terminal
+// must be adopted by the app (`herdr.space` label) and the shown layout must be ours. PI_FOOTER=on|off overrides.
+const HERDR_LAYOUT = "pi";
+const LAYOUT_TTL_MS = 3_000;
+let herdrAdopted = false; // set once, asynchronously
+let layoutCache: { at: number; name: string | undefined } = { at: 0, name: undefined };
+
+function shownLayout(now: number): string | undefined {
+	if (now - layoutCache.at < LAYOUT_TTL_MS) return layoutCache.name;
+	let name: string | undefined;
+	try {
+		const home = process.env.HERDR_APP_HOME || join(homedir(), ".config", "herdr-app");
+		name = JSON.parse(readFileSync(join(home, "shared.json"), "utf8")).layout;
+	} catch {}
+	layoutCache = { at: now, name };
+	return name;
+}
+export function footerHidden(now = Date.now()): boolean {
+	const force = process.env.PI_FOOTER;
+	if (force === "on") return false;
+	if (force === "off") return true;
+	return herdrAdopted && shownLayout(now) === HERDR_LAYOUT;
+}
+function detectHerdrApp() {
+	const id = process.env.HC_TERMINAL_ID;
+	if (!id) return;
+	execFile("hc", ["get", id, "--json"], { timeout: 10_000 }, (err, stdout) => {
+		try {
+			herdrAdopted = Boolean(JSON.parse(stdout)?.labels?.["herdr.space"]);
+		} catch {
+			void err;
+		}
+		requestRenderGlobal?.();
+	});
+}
+let requestRenderGlobal: (() => void) | undefined;
 
 const REFRESH_MS = 60_000;
 const MAX_AGE = "45s"; // quota-axi serves a reading younger than this; keeps the worst-case lag under 2 minutes
@@ -254,6 +294,7 @@ export default function (pi: ExtensionAPI) {
 
 
 	const refreshQuota = () => {
+		if (footerHidden()) return requestRender?.(); // hidden: re-evaluate (a layout switch can bring the footer back)
 		if (inflight) return;
 		inflight = true;
 		execFile(
@@ -278,6 +319,7 @@ export default function (pi: ExtensionAPI) {
 		for (const t of timers) clearInterval(t);
 		timers = [];
 		requestRender = undefined;
+		requestRenderGlobal = undefined;
 	};
 
 	for (const ev of ["model_select", "thinking_level_select", "turn_end", "message_end"] as const)
@@ -286,6 +328,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.on("session_start", (_e, c) => {
 		stop();
+		detectHerdrApp();
 		if (!FIRSTMATE_WORKER) {
 			refreshQuota();
 			// Reset times are fixed clock times, so nothing needs a per-tick redraw; a render follows each refresh.
@@ -295,9 +338,11 @@ export default function (pi: ExtensionAPI) {
 
 		c.ui.setFooter((tui, theme, footerData) => {
 			requestRender = () => tui.requestRender();
+			requestRenderGlobal = requestRender;
 			const offBranch = footerData.onBranchChange(() => tui.requestRender());
 			return {
 				render(width: number): string[] {
+					if (footerHidden()) return [];
 					const usage = c.getContextUsage();
 					return renderFooter(
 						theme,
