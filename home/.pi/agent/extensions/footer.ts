@@ -1,8 +1,10 @@
-// Footer (Starship-prose statusline with subscription quota used %) + C3 "Rail" prompt box.
+// Footer: Starship-prose statusline with subscription quota used % and local reset times.
 // Pairs with themes/tokyo-quota.json. Quota comes from `quota-axi --json`, refreshed off the render path.
 import { execFile } from "node:child_process";
-import { basename } from "node:path";
-import { CustomEditor, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { basename, join } from "node:path";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 // ---------------------------------------------------------------- palette
@@ -16,9 +18,53 @@ const HEX = {
 	grok: "#c0caf5",
 } as const;
 
+// A Firstmate worker pane (FM_TASK_ID is set on every ship/scout launch) is read by Firstmate's watcher,
+// which hashes the pane to tell a quiet worker from a busy one. A quota row there changes the pane whenever
+// a reading changes, so worker panes draw only the static first row and start no timers.
+const FIRSTMATE_WORKER = Boolean(process.env.FM_TASK_ID);
+
+// Inside the Herdr app with the `pi` layout, the quota bar and session mods show everything this footer does,
+// so the footer draws nothing (and skips quota-axi). Detected from the app session, not the OS: the terminal
+// must be adopted by the app (`herdr.space` label) and the shown layout must be ours. PI_FOOTER=on|off overrides.
+const HERDR_LAYOUT = "pi";
+const LAYOUT_TTL_MS = 3_000;
+let herdrAdopted = false; // set once, asynchronously
+let layoutCache: { at: number; name: string | undefined } = { at: 0, name: undefined };
+
+function shownLayout(now: number): string | undefined {
+	if (now - layoutCache.at < LAYOUT_TTL_MS) return layoutCache.name;
+	let name: string | undefined;
+	try {
+		const home = process.env.HERDR_APP_HOME || join(homedir(), ".config", "herdr-app");
+		name = JSON.parse(readFileSync(join(home, "shared.json"), "utf8")).layout;
+	} catch {}
+	layoutCache = { at: now, name };
+	return name;
+}
+export function footerHidden(now = Date.now()): boolean {
+	const force = process.env.PI_FOOTER;
+	if (force === "on") return false;
+	if (force === "off") return true;
+	return herdrAdopted && shownLayout(now) === HERDR_LAYOUT;
+}
+function detectHerdrApp() {
+	const id = process.env.HC_TERMINAL_ID;
+	if (!id) return;
+	execFile("hc", ["get", id, "--json"], { timeout: 10_000 }, (err, stdout) => {
+		try {
+			herdrAdopted = Boolean(JSON.parse(stdout)?.labels?.["herdr.space"]);
+		} catch {
+			void err;
+		}
+		requestRenderGlobal?.();
+	});
+}
+let requestRenderGlobal: (() => void) | undefined;
+
 const REFRESH_MS = 60_000;
-const TICK_MS = 30_000;
-const STALE_MS = 5 * 60_000;
+const MAX_AGE = "45s"; // quota-axi serves a reading younger than this; keeps the worst-case lag under 2 minutes
+const STALE_MS = 3 * 60_000;
+const SESSION_WINDOW_MS = 5 * 3_600_000;
 const EXEC_TIMEOUT_MS = 20_000;
 
 const ICON = { branch: "\uf418", brain: "\u{f09d1}", gauge: "\u{f0f86}", reset: "\u{f06b0}" };
@@ -26,7 +72,8 @@ const ICON = { branch: "\uf418", brain: "\u{f09d1}", gauge: "\u{f0f86}", reset: 
 // ---------------------------------------------------------------- types
 export type ProviderId = "claude" | "codex" | "grok";
 const PROVIDERS: ProviderId[] = ["claude", "codex", "grok"];
-const PI_PROVIDER: Record<string, ProviderId> = { anthropic: "claude", "openai-codex": "codex", xai: "grok" };
+// Pi names the ChatGPT subscription provider "openai"; older builds used "openai-codex".
+const PI_PROVIDER: Record<string, ProviderId> = { anthropic: "claude", openai: "codex", "openai-codex": "codex", xai: "grok" };
 const SHORT: Record<ProviderId, string> = { claude: "cl", codex: "cx", grok: "gk" };
 const INITIAL: Record<ProviderId, string> = { claude: "C", codex: "X", grok: "G" };
 
@@ -39,7 +86,7 @@ export interface QuotaWindow {
 export type ProviderQuota =
 	| { status: "absent" }
 	| { status: "error"; message: string }
-	| { status: "ok"; windows: QuotaWindow[]; limiting: string; effective: number; refreshedAt: number; stale: boolean };
+	| { status: "ok"; windows: QuotaWindow[]; refreshedAt: number; stale: boolean };
 export interface QuotaSnapshot {
 	fetchedAt: number;
 	providers: Record<ProviderId, ProviderQuota>;
@@ -85,15 +132,8 @@ export function parseQuota(json: any, fetchedAt: number): QuotaSnapshot {
 			providers[id] = { status: "absent" };
 			continue;
 		}
-		const eff = (p.quotaSemantics?.effectiveAvailability ?? []).find(
-			(e: any) => e.scope === "all_models" || e.scope === "all_products",
-		);
-		let limiting: string | undefined = eff?.limitingWindowIds?.[0];
-		if (!windows.some((w) => w.id === limiting)) limiting = windows.reduce((a, b) => (b.pct < a.pct ? b : a)).id;
-		const effective =
-			typeof eff?.effectivePercentRemaining === "number" ? eff.effectivePercentRemaining : windows.find((w) => w.id === limiting)!.pct;
 		const refreshed = p.state?.refreshedAt ? Date.parse(p.state.refreshedAt) : fetchedAt;
-		providers[id] = { status: "ok", windows, limiting: limiting!, effective, refreshedAt: Math.min(refreshed, fetchedAt), stale: !!p.state?.stale };
+		providers[id] = { status: "ok", windows, refreshedAt: Math.min(refreshed, fetchedAt), stale: !!p.state?.stale };
 	}
 	return { fetchedAt, providers };
 }
@@ -126,16 +166,15 @@ export function formatWindow(n: number): string {
 	if (n >= 1_000_000) return `${Number((n / 1_000_000).toFixed(1))}M`;
 	return `${Math.round(n / 1000)}k`;
 }
-export function formatCountdown(ms: number): string {
-	const mins = Math.max(0, Math.floor(ms / 60_000));
-	if (mins < 60) return `${mins}m`;
-	const h = Math.floor(mins / 60);
-	if (h < 24) return `${h}h${String(mins % 60).padStart(2, "0")}m`;
-	return `${Math.floor(h / 24)}d${h % 24}h`;
-}
-const formatAge = (ms: number) => {
-	const m = Math.floor(ms / 60_000);
-	return m >= 60 ? `${Math.floor(m / 60)}h` : `${m}m`;
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const clock = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+// Local reset time: "15:10" when it is today, "Wed 19:59" otherwise (the weekday is dropped when `withDay` is false).
+export function formatResetTime(at: number, now: number, withDay = true): string {
+	const d = new Date(at);
+	const n = new Date(now);
+	const today = d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+	if (today || !withDay) return clock(d);
+	return `${d.toLocaleDateString("en-US", { weekday: "short" })} ${clock(d)}`;
 };
 // pct here is quota USED (100 - remaining)
 const usedPct = (remaining: number) => Math.round(100 - remaining);
@@ -148,17 +187,18 @@ interface Level {
 	words: boolean; // "on" / "with"
 	bar: number; // 0 = no bar
 	shortEffort: boolean;
-	bothWindows: boolean;
+	times: "day" | "time" | "none"; // reset time: "Wed 19:59", "19:59" or hidden
 	names: "full" | "short" | "initial";
-	resetOnlyLow: boolean;
 }
+// Both quota windows stay on screen at every level; narrow widths drop the weekday, then the times, then shorten names.
 const LEVELS: Level[] = [
-	{ n: 1, repo: true, words: true, bar: 10, shortEffort: false, bothWindows: true, names: "full", resetOnlyLow: false },
-	{ n: 2, repo: true, words: true, bar: 10, shortEffort: false, bothWindows: false, names: "full", resetOnlyLow: false },
-	{ n: 3, repo: true, words: false, bar: 6, shortEffort: false, bothWindows: false, names: "full", resetOnlyLow: false },
-	{ n: 4, repo: false, words: false, bar: 6, shortEffort: false, bothWindows: false, names: "full", resetOnlyLow: false },
-	{ n: 5, repo: false, words: false, bar: 0, shortEffort: true, bothWindows: false, names: "short", resetOnlyLow: true },
-	{ n: 6, repo: false, words: false, bar: 0, shortEffort: true, bothWindows: false, names: "initial", resetOnlyLow: true },
+	{ n: 1, repo: true, words: true, bar: 10, shortEffort: false, times: "day", names: "full" },
+	{ n: 2, repo: true, words: true, bar: 10, shortEffort: false, times: "time", names: "full" },
+	{ n: 3, repo: true, words: false, bar: 6, shortEffort: false, times: "time", names: "full" },
+	{ n: 4, repo: false, words: false, bar: 6, shortEffort: false, times: "time", names: "full" },
+	{ n: 5, repo: false, words: false, bar: 0, shortEffort: true, times: "none", names: "full" },
+	{ n: 6, repo: false, words: false, bar: 0, shortEffort: true, times: "none", names: "short" },
+	{ n: 7, repo: false, words: false, bar: 0, shortEffort: true, times: "none", names: "initial" },
 ];
 
 function line1(t: Theme, i: FooterInput, lv: Level, width: number): string {
@@ -193,8 +233,26 @@ function line1(t: Theme, i: FooterInput, lv: Level, width: number): string {
 	return gap >= 2 ? left + " ".repeat(gap) + right : `${left}  ${right}`; // overflow is caught by the fit check
 }
 
+// The 5h window reports "reset = now + 5h" until the first message of a window; that is "not started", not a reset time.
+const notStarted = (w: QuotaWindow, refreshedAt: number) =>
+	w.kind === "session" && w.pct >= 100 && w.resetsAt !== undefined && w.resetsAt - refreshedAt >= SESSION_WINDOW_MS - 3 * 60_000;
+
+function windowPart(t: Theme, i: FooterInput, lv: Level, q: Extract<ProviderQuota, { status: "ok" }>, w: QuotaWindow, stale: boolean): string {
+	const tag = w.kind === "session" ? "5h" : "wk";
+	const rolled = w.resetsAt !== undefined && w.resetsAt <= i.now; // window already reset, the percent we hold is from before
+	const pct = usedPct(w.pct);
+	const val = rolled ? t.fg("dim", "reset") : stale ? t.fg("dim", `~${pct}%`) : bold(t.fg(pctRole(pct), `${pct}%`));
+	if (lv.names === "initial") return rolled ? "·" : `${pct}`;
+	let s = `${val} ${t.fg(stale || rolled ? "dim" : "muted", tag)}`;
+	if (lv.times !== "none" && !rolled) {
+		if (notStarted(w, q.refreshedAt)) s += ` ${t.fg("dim", `${ICON.reset} not started`)}`;
+		else if (w.resetsAt !== undefined) s += ` ${t.fg("dim", `${ICON.reset} ${formatResetTime(w.resetsAt, i.now, lv.times === "day")}`)}`;
+	}
+	return s;
+}
+
 function line2(t: Theme, i: FooterInput, lv: Level): string {
-	const sep = t.fg("borderMuted", lv.n >= 6 ? " " : "  ·  ");
+	const sep = t.fg("borderMuted", lv.n >= 7 ? " " : "  ·  ");
 	if (!i.quota) return t.fg("dim", i.quotaFailed ? "quota unavailable" : "quota loading…");
 	const active = i.model ? PI_PROVIDER[i.model.provider] : undefined;
 	const cells = PROVIDERS.map((id) => {
@@ -206,22 +264,11 @@ function line2(t: Theme, i: FooterInput, lv: Level): string {
 		if (q.status === "absent") return lv.names === "initial" ? t.fg("borderMuted", `${label} --`) : t.fg("borderMuted", `${label} not set up`);
 		if (q.status === "error")
 			return marker + (lv.names === "initial" ? bold(t.fg("error", `${label} !`)) : bold(t.fg("error", `${label} ! ${q.message}`)));
-		const age = i.now - q.refreshedAt;
-		const stale = q.stale || age > STALE_MS;
-		const lim = q.windows.find((w) => w.id === q.limiting)!;
-		const shown = lv.bothWindows ? q.windows : [lim];
-		const parts = shown.map((w, idx) => {
-			const pct = usedPct(w.id === lim.id ? q.effective : w.pct);
-			const tag = w.kind === "session" ? "5h" : "wk";
-			const val = stale ? t.fg("dim", `~${pct}%`) : bold(t.fg(pctRole(pct), `${pct}%`));
-			if (lv.names === "initial") return val;
-			let s = `${val} ${t.fg(stale ? "dim" : "muted", tag)}`;
-			const showReset = w.id === lim.id && w.resetsAt !== undefined && (!lv.resetOnlyLow || usedPct(q.effective) >= 80);
-			if (showReset) s += ` ${t.fg("dim", `${ICON.reset}${formatCountdown(w.resetsAt! - i.now)}`)}`;
-			return idx === 0 ? s : `${t.fg("borderMuted", "· ")}${s}`;
-		});
-		let cell = `${marker}${name} ${parts.join(" ")}`;
-		if (stale && lv.names !== "initial") cell += t.fg("warning", ` (${formatAge(age)} old)`);
+		const stale = q.stale || i.now - q.refreshedAt > STALE_MS;
+		const sepWin = lv.names === "initial" ? "/" : t.fg("borderMuted", " · ");
+		let cell = `${marker}${name} ${q.windows.map((w) => windowPart(t, i, lv, q, w, stale)).join(sepWin)}`;
+		if (lv.names === "initial") cell += t.fg("dim", "%");
+		if (stale && lv.times !== "none") cell += t.fg("warning", ` updated ${clock(new Date(q.refreshedAt))}`);
 		return cell;
 	});
 	return cells.join(sep);
@@ -231,7 +278,7 @@ export function renderFooter(t: Theme, i: FooterInput, width: number): string[] 
 	if (width < 1) return [];
 	let last: string[] = [];
 	for (const lv of LEVELS) {
-		last = [line1(t, i, lv, width), line2(t, i, lv)];
+		last = FIRSTMATE_WORKER ? [line1(t, i, lv, width)] : [line1(t, i, lv, width), line2(t, i, lv)];
 		if (last.every((l) => visibleWidth(l) <= width)) return last;
 	}
 	return last.map((l) => truncateToWidth(l, width));
@@ -239,19 +286,20 @@ export function renderFooter(t: Theme, i: FooterInput, width: number): string[] 
 
 // ---------------------------------------------------------------- extension
 export default function (pi: ExtensionAPI) {
-	let ctx: ExtensionContext | undefined;
 	let requestRender: (() => void) | undefined;
 	let quota: QuotaSnapshot | undefined;
 	let quotaFailed = false;
 	let inflight = false;
 	let timers: ReturnType<typeof setInterval>[] = [];
 
+
 	const refreshQuota = () => {
+		if (footerHidden()) return requestRender?.(); // hidden: re-evaluate (a layout switch can bring the footer back)
 		if (inflight) return;
 		inflight = true;
 		execFile(
 			"quota-axi",
-			["--json", "--max-age", "90s", "--provider", "claude,codex,grok"],
+			["--json", "--max-age", MAX_AGE, "--provider", "claude,codex,grok"],
 			{ timeout: EXEC_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
 			(err, stdout) => {
 				inflight = false;
@@ -271,6 +319,7 @@ export default function (pi: ExtensionAPI) {
 		for (const t of timers) clearInterval(t);
 		timers = [];
 		requestRender = undefined;
+		requestRenderGlobal = undefined;
 	};
 
 	for (const ev of ["model_select", "thinking_level_select", "turn_end", "message_end"] as const)
@@ -279,16 +328,21 @@ export default function (pi: ExtensionAPI) {
 
 	pi.on("session_start", (_e, c) => {
 		stop();
-		ctx = c;
-		refreshQuota();
-		timers.push(setInterval(refreshQuota, REFRESH_MS), setInterval(() => requestRender?.(), TICK_MS));
+		detectHerdrApp();
+		if (!FIRSTMATE_WORKER) {
+			refreshQuota();
+			// Reset times are fixed clock times, so nothing needs a per-tick redraw; a render follows each refresh.
+			timers.push(setInterval(refreshQuota, REFRESH_MS));
+		}
 		for (const t of timers) t.unref?.();
 
 		c.ui.setFooter((tui, theme, footerData) => {
 			requestRender = () => tui.requestRender();
+			requestRenderGlobal = requestRender;
 			const offBranch = footerData.onBranchChange(() => tui.requestRender());
 			return {
 				render(width: number): string[] {
+					if (footerHidden()) return [];
 					const usage = c.getContextUsage();
 					return renderFooter(
 						theme,
@@ -312,32 +366,6 @@ export default function (pi: ExtensionAPI) {
 					requestRender = undefined;
 				},
 			};
-		});
-
-		c.ui.setEditorComponent((tui, theme, kb) => {
-			class RailEditor extends CustomEditor {
-				constructor() {
-					super(tui, theme, kb, { paddingX: 0 });
-				}
-				render(width: number): string[] {
-					if (width < 10) return super.render(width);
-					const ui = ctx?.ui.theme;
-					if (!ui) return super.render(width);
-					// rail(1) + pad(1) + prompt prefix(2)
-					const inner = super.render(width - 4);
-					const visible: number = (this as any).renderedVisibleLineCount ?? Math.max(1, inner.length - 2);
-					const body = inner.slice(1, 1 + visible);
-					const extras = inner.slice(2 + visible);
-					const rule = ui.fg("borderMuted", "─".repeat(width));
-					const rail = (this as any).borderColor ? (this as any).borderColor("▎") : ui.fg("borderMuted", "▎");
-					const out = [rule, rail];
-					body.forEach((l, idx) => out.push(`${rail} ${idx === 0 ? ui.fg("borderMuted", "❯ ") : "  "}${l}`));
-					out.push(rail, rule);
-					for (const l of extras) out.push(`    ${l}`);
-					return out;
-				}
-			}
-			return new RailEditor();
 		});
 	});
 }

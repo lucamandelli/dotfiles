@@ -219,8 +219,10 @@ in
   home.file.".codex/AGENTS.md".source = link "AGENTS.md";
   home.file.".pi/agent/AGENTS.md".source = link "AGENTS.md";
 
-  # Pi footer/statusline + prompt rail; the theme is set by mergePiSettings.
+  # Pi footer/statusline; the theme is set by mergePiSettings.
   home.file.".pi/agent/extensions/footer.ts".source = link ".pi/agent/extensions/footer.ts";
+  # Publishes model/effort/context to the Herdr app as a terminal label (no-op outside herdr-core).
+  home.file.".pi/agent/extensions/herdr-session.ts".source = link ".pi/agent/extensions/herdr-session.ts";
   home.file.".pi/agent/themes/tokyo-quota.json".source = link ".pi/agent/themes/tokyo-quota.json";
   # Transcript display: thinking rail, code frame, session header/prompt (needs `quietStartup: true`, see README).
   home.file.".pi/agent/extensions/thinking-rail.ts".source = link ".pi/agent/extensions/thinking-rail.ts";

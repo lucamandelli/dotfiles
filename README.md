@@ -60,8 +60,19 @@ Linked into `~/.pi/agent` (see `home.nix`): `extensions/{thinking-rail,code-box,
 
 - Rebuild merges `quietStartup: true`, the `tokyo-quota` theme, `npm:pi-cc-extensions`, `npm:pi-claude-auth` and `npm:@plannotator/pi-extension` into `~/.pi/agent/settings.json`. It sets Anthropic and `claude-opus-5-5` as defaults, configures the enabled Anthropic, OpenAI and xAI models listed in `home/.pi/agent/settings.base.json`, and disables the Anthropic extra usage warning. Other settings and packages are preserved; if Pi is available, rebuild runs `pi update --extensions`. Without `quietStartup`, Pi's own `[Skills]`/`[Extensions]` listing shows next to our header.
 - Logins are per machine and never synced: use `/login` for Anthropic, OpenAI and xAI; Pi stores credentials in `~/.pi/agent/auth.json`. For `pi-claude-auth`, install and authenticate Claude Code and run `claude` at least once on each machine.
-- `code-box.ts` (code frame) and `session-chrome.ts` (`❯` prompt) patch private Pi/pi-tui prototypes on `session_start`, restore on `session_shutdown`, and fall back to native rendering if the method shape differs. `pi-cc-extensions` patches private components too; after a Pi upgrade that breaks one, remove it from `packages` or delete the file link. Rebuild adds the package back.
+- `code-box.ts` (code frame) and `session-chrome.ts` (cyan `▌` bar on your own messages) patch private Pi/pi-tui prototypes on `session_start`, restore on `session_shutdown`, and fall back to native rendering if the method shape differs. `pi-cc-extensions` patches private components too; after a Pi upgrade that breaks one, remove it from `packages` or delete the file link. Rebuild adds the package back.
+- Your messages: the theme's `userMessageBg` is a light tint, and `session-chrome.ts` swaps it for the cyan bar. If a Pi upgrade changes `UserMessageComponent` the patch switches itself off and Pi paints the tint, so your messages stay easy to find. After each Pi upgrade check that the bar still shows (a message with the bar and no tint means the patch works). The composer is Pi's own editor; the old `▎ ❯` rail is gone.
 - Known package quirks: expanded tool output (ctrl+o) uses the package's green/red boxes, and at narrow widths a truncated error line can leak a cut ANSI sequence.
+
+## Pi in the Herdr app (Linux)
+
+The Pi footer (`footer.ts`) is for the Mac and any terminal outside the Herdr app. Inside the Herdr app, with the `pi` layout shown, it draws nothing and skips `quota-axi`; the Herdr mods show the same facts without repeating them (override with `PI_FOOTER=on|off`).
+
+- `home/.config/herdr-app/` (linked by `linux.nix` only; the Mac cannot install the app): `layouts/pi.json` (a copy of Herdr's `main`) and three mods. `quota-bar` is the bottom bar: one chip per logged-in provider with 5h and weekly usage and local reset times, the focused session's provider highlighted. `session-card` sits above the Spaces list and follows the focused terminal: context gauge, model, effort. `session-header` is each terminal's header: agent, folder, branch, space and tab, status, split/zoom/close.
+- `home/.pi/agent/extensions/herdr-session.ts` publishes provider, model, effort and context as a `pi.session` label on the herdr-core terminal; the mods read it from `terminals()`. Only Pi publishes it; other agents show their name.
+- Mods cannot import outside their own folder, so `lib/pi-session.js` is copied into each mod: edit it, run `home/.config/herdr-app/sync-lib.sh`, commit (`--check` finds drift).
+- First time: `herdr-app do layout.switch --name pi`; `ctrl-shift-l` goes back to `main`. Herdr replaces `main` on every start, so `pi` does not get changes Herdr makes to it.
+- After a Herdr update, run `herdr-app check home/.config/herdr-app/mods/<name>` for each mod.
 
 ## Code review
 

@@ -3,6 +3,7 @@
 let
   clipboard = pkgs.gnomeExtensions.clipboard-indicator;
   workspaces = lib.range 1 9;
+  herdrApp = path: config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.dotfiles/home/.config/herdr-app/${path}";
   perWorkspace = f: builtins.listToAttrs (map f workspaces);
 in
 
@@ -23,6 +24,14 @@ in
   # sudo without a terminal (coding agents) asks for the password in a GUI dialog.
   home.file.".local/bin/sudo".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.dotfiles/home/.local/bin/sudo";
   home.file.".local/bin/sudo-askpass".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.dotfiles/home/.local/bin/sudo-askpass";
+
+  # Herdr app (Linux only; the Mac runs the Herdr terminal UI, so it keeps the Pi footer): the quota bar,
+  # session card and pane header mods plus the `pi` layout that uses them. Edit-in-place symlinks; the app
+  # keeps its own state beside them. Switch once with `herdr-app do layout.switch --name pi`.
+  home.file.".config/herdr-app/mods/quota-bar".source = herdrApp "mods/quota-bar";
+  home.file.".config/herdr-app/mods/session-card".source = herdrApp "mods/session-card";
+  home.file.".config/herdr-app/mods/session-header".source = herdrApp "mods/session-header";
+  home.file.".config/herdr-app/layouts/pi.json".source = herdrApp "layouts/pi.json";
 
   # GNOME's "launch terminal" action goes through xdg-terminal-exec.
   xdg.configFile."xdg-terminals.list".text = ''
