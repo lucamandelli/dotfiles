@@ -50,6 +50,8 @@ export default class SessionCard extends View {
     const key = providerKeyOf(term);
     const color = (s?.provider && PROVIDERS[s.provider]?.color) || KEY_COLOR[key] || t.foreground;
     const agent = pane?.program?.name ?? "Terminal";
+    const leaf = pane?.cwd ? pane.cwd.replace(/\/+$/, "").split("/").pop() || "/" : "";
+    const where = () => div().truncate().text_size(12).font_semibold().text_color(t.accent).child(leaf);
 
     const body = s
       ? v_flex().flex_1().min_w(0).gap(3)
@@ -57,9 +59,11 @@ export default class SessionCard extends View {
           .child(div().truncate().text_size(19).font_bold().text_color(color).child(shortModel(s.model)))
           .child(h_flex().child(div().px(7).h(20).flex().items_center().rounded(5).text_size(11.5).font_semibold()
             .bg((EFFORT_COLOR[s.effort] ?? t.muted) + "30").text_color(EFFORT_COLOR[s.effort] ?? t.muted).child(`effort ${s.effort}`)))
+          .when(Boolean(leaf), (el) => el.child(where()))
       : v_flex().flex_1().min_w(0).gap(3)
           .child(div().truncate().text_size(19).font_bold().text_color(color).child(agent))
-          .child(div().text_size(11).text_color(t.dim).child(key ? `${key} · no model data` : "no model data"));
+          .child(div().text_size(11).text_color(t.dim).child(key ? `${key} · no model data` : "no model data"))
+          .when(Boolean(leaf), (el) => el.child(where()));
 
     return div().size_full().p(8).child(
       h_flex().size_full().items_center().gap(10).px(10).rounded(9).bg(t.surface).border(1).border_color(t.border)
