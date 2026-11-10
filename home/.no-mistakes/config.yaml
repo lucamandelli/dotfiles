@@ -11,8 +11,9 @@
 # Use acp:<target> to run an optional user-installed acpx target, for example acp:gemini
 agent: [claude, codex, grok]
 
-# Main-chain model and effort per agent (every non-review step and the review
-# fixer). quota_routing below picks the head agent per run by quota-axi.
+# Main-chain model and effort per agent (every non-review step). quota_routing
+# below picks the head agent per run by quota-axi. The review fixer is pinned
+# under review_agents, not this chain.
 agent_config:
   claude:
     model: claude-sonnet-5-5
@@ -26,7 +27,9 @@ agent_config:
     quota_provider: grok
 
 # Strong reviewer; fallback advances only on provider quota exhaustion.
-# The fixer is omitted on purpose so it uses the quota-routed main chain.
+# Fixer is its own profile so review fixes are not the quota-routed main chain.
+# no-mistakes v1.106.1 does not accept fallback on the fixer role (only reviewer
+# roles), so a Claude quota stall affects fix rounds until it resets.
 review_agents:
   reviewer:
     agent: claude
@@ -35,6 +38,10 @@ review_agents:
     fallback:
       - {agent: codex, model: gpt-6.1-sol, effort: high}
       - {agent: grok, model: grok-4.7, effort: high}
+  fixer:
+    agent: claude
+    model: claude-opus-5-5
+    effort: medium
 
 quota_routing:
   enabled: true
