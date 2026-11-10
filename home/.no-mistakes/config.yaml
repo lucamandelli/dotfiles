@@ -203,6 +203,9 @@ ci:
 # branch_pattern when configured. A branch pattern with no match fails safely.
 # Global-only branch_replacement can add literal text around that group with ${1}.
 # Repo config may override fix_message and branch_pattern.
+# Conventional Commits hooks reject the default no-mistakes(<step>): subject.
+commit:
+  fix_message: "fix({{.Step}}): {{.Summary}}"
 # commit:
 #   branch_pattern: '^PROJ/([0-9]+)$'
 #   branch_replacement: 'PROJ-${1}'
