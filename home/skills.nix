@@ -19,14 +19,17 @@ let
   # name = source dir. The name must match the dir's SKILL.md `name:`.
   # Personal skills live in ./skills (this repo). Upstream skills come from flake inputs.
   skills = {
-    # mattpocock/skills (grill-me needs grilling; to-spec and to-tickets need setup-matt-pocock-skills)
+    # mattpocock/skills (grill-me needs grilling; to-spec and to-tickets need setup-matt-pocock-skills;
+    # implement needs tdd; its code-review step is skipped because no-mistakes reviews)
     grill-me = "${mp}/productivity/grill-me";
     grilling = "${mp}/productivity/grilling";
     wait-what = "${mp}/productivity/wait-what";
     writing-for-agents = "${mp}/productivity/writing-for-agents";  # retro needs it
     diagnosing-bugs = "${mp}/engineering/diagnosing-bugs";
+    implement = "${mp}/engineering/implement";
     retro = "${mp}/engineering/retro";
     setup-matt-pocock-skills = "${mp}/engineering/setup-matt-pocock-skills";
+    tdd = "${mp}/engineering/tdd";
     to-spec = "${mp}/engineering/to-spec";
     to-tickets = "${mp}/engineering/to-tickets";
     # addyosmani/agent-skills
