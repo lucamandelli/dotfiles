@@ -42,6 +42,12 @@ review_agents:
     agent: claude
     model: claude-opus-5-5
     effort: medium
+  # Escalate fix effort after two rounds while keeping reviews at Opus high.
+  fixer_after_round:
+    agent: claude
+    model: claude-opus-5-5
+    effort: high
+    after_round: 2
 
 quota_routing:
   enabled: true
