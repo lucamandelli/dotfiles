@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
+from types import SimpleNamespace
 
 
 spec = importlib.util.spec_from_file_location(
@@ -47,6 +49,31 @@ class CodexHookTest(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 setup.configure_codex_hook(home, home)
             self.assertEqual(target.read_text(), "{}")
+
+
+class PluginTest(unittest.TestCase):
+    def test_installs_over_https_and_skips_enabled_user_plugin(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            servers = home / "servers.json"
+            servers.write_text('{"mcpServers": {}}')
+            plugins = []
+            calls = []
+
+            def fake_run(*args, **kwargs):
+                calls.append(args)
+                if args == ("claude", "plugin", "list", "--json"):
+                    return SimpleNamespace(stdout=json.dumps(plugins))
+                if args[:3] == ("claude", "plugin", "install"):
+                    plugins.append({"id": "plannotator@plannotator", "scope": "user", "enabled": True})
+                return SimpleNamespace(stdout="")
+
+            with patch.object(setup.Path, "home", return_value=home), patch.dict(setup.os.environ, {"CODEX_HOME": str(home / ".codex")}), patch.object(setup.sys, "argv", ["setup", str(servers)]), patch.object(setup, "run", side_effect=fake_run):
+                setup.main()
+                setup.main()
+
+            installs = [call for call in calls if call[:3] == ("claude", "plugin", "install")]
+            self.assertEqual(installs, [("claude", "plugin", "install", "--marketplace", "https://github.com/backnotprop/plannotator.git", "plannotator", "--scope", "user")])
 
 
 if __name__ == "__main__":

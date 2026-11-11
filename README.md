@@ -19,8 +19,6 @@ My Mac and Ubuntu setup, managed with home-manager (plus nix-darwin on the Mac).
 - `home.nix` - shared user config and out-of-store symlinks
 - `linux.nix` - Ubuntu-only home-manager bits
 - `home/skills.nix` - global agent skills (see below)
-- `home/review-tools.nix` - Hunk and tuicr from the flake (Ubuntu, imported by `linux.nix`)
-- `home/review-tools-mac.nix` - Hunk and tuicr release binaries (Mac, imported by `flake.nix`)
 - `home/` - the real config files, symlinked into `~` (edit here, no rebuild needed)
 - `etc/` - system files outside `~` (keyd), linked by hand on Ubuntu
 - `rebuild.sh` - links the repo to `~/.dotfiles` and switches the right config for the OS
@@ -44,7 +42,7 @@ See [firstmate.md](firstmate.md) for the isolated setup and machine sync.
 
 ## Global agent skills
 
-`home/skills.nix` links each skill into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Upstream sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` and `plannotator` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` and `gh-stack` from their respective inputs (refreshed on rebuild). Personal skills live in `home/skills/<name>/` and are listed in the same set. The `no-mistakes` skill and Claude's `synced/` dir sit alongside, unmanaged by home-manager.
+`home/skills.nix` links each skill into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Upstream sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` and `plannotator` (`flake = false`, pinned in `flake.lock`), plus release-matched `hunk-review` and `gh-stack` skills installed during activation. Personal skills live in `home/skills/<name>/` and are listed in the same set. The `no-mistakes` skill and Claude's `synced/` dir sit alongside, unmanaged by home-manager.
 
 - Add an upstream skill: put `name = "${src}/path/to/skill-dir";` in the `skills` set (name must match the skill's `name:` and not collide). Link the whole dir, so bundled files travel. Check the skill has no `../` references to repo-level files, and add any skills it depends on. For a new source, add a `flake = false` input in `flake.nix`.
 - Add a personal skill: create `home/skills/<name>/` (self-contained, no `../` references) and add `name = ./skills/<name>;`. The directory name, the attr name, and `name:` must match.
@@ -89,15 +87,9 @@ Both tools go live after `git pull && ./rebuild.sh`. No extensions, global pager
 - **Hunk, local work with an agent:** run `hunk diff` in the worktree, or `hunk diff main...HEAD` for committed changes. In Pi, Claude Code, Codex or Grok, ask: "Use hunk-review to walk me through this session. Explain your changes with inline notes on the hunks, and answer my comments." The agent navigates and annotates the live diff, without adding explanation comments to source files. Press `a` to show agent notes if hidden; `c` adds your question. To include human questions, the agent reads `hunk session comment list --repo /absolute/worktree/path --type all --json` (the default omits human notes).
 - **tuicr, colleagues' PRs or other diffs:** from a clone with authenticated `gh`, run `tuicr pr <n>`; `tuicr -w` reviews local changes. Add anchored comments with `c`, mark files/hunks reviewed with `r`/`R`, then `y` or `:clip` exports Markdown to paste into the agent and ask whether the code makes sense. `:submit` is separate: it posts a GitHub review, so check the target/head first.
 
-**Ubuntu** builds both from the flake (`home/review-tools.nix`, imported by `linux.nix`); `rebuild.sh` runs `nix flake update --flake "$DIR" hunk tuicr` before its switch. These inputs track upstream's default branches, not release tags; their lock entries refresh on each rebuild, with no manual version bumps. This keeps the install declarative and avoids another installer or release-discovery dependency, but can include unreleased changes or upstream build breakage.
+Hunk, tuicr and gh-stack use latest GitHub releases through mise on both platforms. Activation upgrades them and links gh-stack as a GitHub CLI extension. Activation downloads the Hunk and gh-stack skills from the installed release tags and retains cached copies when offline. A skill is only linked when it matches the installed binary. tuicr inherits `EDITOR=nvim`. Review data stays per-machine, outside git.
 
-**Intel Mac** must not build them: there is no binary cache, so Nix compiles bun, zig and rust (1300+ derivations, minutes of full CPU). `home/review-tools-mac.nix` (imported only by the Mac in `flake.nix`) downloads the upstream release binaries into `~/.local/bin` once. Upgrade: bump the versions in that file, delete `~/.local/bin/{hunk,tuicr}`, rerun the switch. `rebuild.sh` skips the flake update on the Mac.
-
-**Rule for agents:** a tool added for Linux can silently become a source build on the Mac, and the Mac is the one that suffers. Before committing a new tool, check both. On the Mac, `nix build .#darwinConfigurations.mac.system --dry-run` must not list the tool, rust, zig or bun among "will be built" (a handful of derivations is normal). On Linux, `nix eval .#homeConfigurations.linux.activationPackage.drvPath` must still evaluate; the Mac dry-run queries the `x86_64-darwin` cache and is not verified from Linux, so from Linux say the Mac check is pending. If one OS needs a different install path, keep the existing file for one OS and add a separate `*-mac.nix` or `*-linux.nix`, imported only from that OS's entry point, instead of branching inside one file. Install preference: nixpkgs when it has a cache hit, then mise, then an install-once activation like herdr/grok/codex.
-
-Other top-level inputs stay locked. The update may change `flake.lock`; review and commit it before pulling again. Network access is required.
-
-The Intel Mac uses the existing 26.05 nixpkgs plus Hunk's documented systems override; the four-system list is pinned because its newer default dropped Intel macOS. Hunk's skill follows the same source as its binary. No tuicr config is needed: it inherits `EDITOR=nvim`. Review data stays per-machine, outside git; any future config belongs under `~/.config`, not `~/config`.
+**Rule for agents:** A tool added for Linux can become a source build on the Intel Mac. Before committing a new tool, check both platforms. On the Mac, `nix build .#darwinConfigurations.mac.system --dry-run` must not list the tool, rust, zig or bun among "will be built". On Linux, `nix eval .#homeConfigurations.linux.activationPackage.drvPath` must evaluate. The Mac dry-run checks the `x86_64-darwin` cache and cannot be verified from Linux, so report it as pending. Prefer nixpkgs with a cache hit, then mise, then an install-once activation.
 
 Sources: [Hunk Nix module](https://github.com/modem-dev/hunk/blob/main/nix/README.md), [live review skill](https://github.com/modem-dev/hunk/blob/main/packages/hunk/skills/hunk-review/SKILL.md), [tuicr usage](https://github.com/agavra/tuicr/blob/main/README.md).
 
@@ -218,7 +210,7 @@ Log out and back in afterwards: zsh, the docker group and the GNOME extensions o
 - Existing files in the way of a symlink are renamed to `*.backup`.
 - `ccd` alias runs `claude --dangerously-skip-permissions`; `ccr` runs `claude --resume`.
 - Ubuntu: `~/.local/bin/sudo` wraps sudo so that without a terminal (coding agents) it runs `sudo -A`, and a zenity dialog shows the command and asks for the password.
-- gh-stack: each switch installs or upgrades the latest GitHub CLI extension release; rebuild refreshes the skill source on both platforms. The extension is not in nixpkgs, so activation uses `gh extension` rather than building it on the Intel Mac. It needs authenticated `gh` and Git 2.36+: Git is managed by home-manager, and `gh auth login` is per machine. Extension releases and the skill's upstream default branch may advance independently. Network access is required; rerun the switch if installation or upgrade fails.
+- gh-stack: mise installs the latest release and activation links it as a GitHub CLI extension. Git and authenticated `gh` are required.
 - herdr is installed once by the switch; `herdr update` keeps it current.
 - Herdr app is installed once by the switch on Linux and Apple silicon Macs; it updates itself and herdr-core. Upstream does not support Intel Macs, so installation there fails without affecting the switch. The `herdr-app` and `herdr-core` skills use the installed versions' live documentation.
 - grok is installed once by the switch (`~/.grok/bin`, added to PATH here); `grok update` keeps it current. Run `grok login` once per machine.

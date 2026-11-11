@@ -52,7 +52,7 @@ def main():
 
     plugins = json.loads(run("claude", "plugin", "list", "--json", capture_output=True, text=True).stdout)
     if not any(p.get("id") == "plannotator@plannotator" and p.get("scope") == "user" and p.get("enabled") for p in plugins):
-        run("claude", "plugin", "install", "--marketplace", "backnotprop/plannotator", "plannotator", "--scope", "user")
+        run("claude", "plugin", "install", "--marketplace", "https://github.com/backnotprop/plannotator.git", "plannotator", "--scope", "user")
 
     # Official Codex integration uses an experimental Stop hook.
     run("codex", "features", "enable", "hooks")

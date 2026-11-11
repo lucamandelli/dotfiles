@@ -12,24 +12,10 @@
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
-    # Review tools track upstream; rebuild.sh refreshes only these inputs.
-    # Keep 26.05 nixpkgs and the four-system list for the Intel Mac.
-    # https://github.com/modem-dev/hunk/blob/main/nix/README.md
-    hunk = {
-      url = "github:modem-dev/hunk";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.systems.url = "github:nix-systems/default/da67096a3b9bf56a91d16901293e51ba5b49a27e";
-    };
-    tuicr = {
-      url = "github:agavra/tuicr";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Agent skill sources, pinned in flake.lock; linked by home/skills.nix.
     mattpocock-skills = { url = "github:mattpocock/skills"; flake = false; };
     addy-skills = { url = "github:addyosmani/agent-skills"; flake = false; };
     cursor-plugins = { url = "github:cursor/plugins"; flake = false; };
-    gh-stack = { url = "github:github/gh-stack"; flake = false; };
     plannotator = { url = "github:backnotprop/plannotator"; flake = false; };
   };
 
@@ -50,7 +36,7 @@
             home-manager.useUserPackages = true;
             home-manager.backupFileExtension = "backup";  # existing ~/.zshrc -> ~/.zshrc.backup
             home-manager.extraSpecialArgs = { inherit user inputs; };
-            home-manager.users.${user}.imports = [ ./home.nix ./home/review-tools-mac.nix ];
+            home-manager.users.${user}.imports = [ ./home.nix ];
           }
         ];
       };
