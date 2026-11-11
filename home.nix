@@ -90,15 +90,6 @@ in
   # Node, Python, Bun and pi; versions live in home/.config/mise/config.toml.
   programs.mise.enable = true;
 
-  # gh-stack is not packaged in nixpkgs. Install or upgrade its latest release on each switch.
-  home.activation.installGhStack = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if [ -d "''${XDG_DATA_HOME:-$HOME/.local/share}/gh/extensions/gh-stack" ]; then
-      run ${pkgs.gh}/bin/gh extension upgrade stack || echo "gh-stack upgrade failed, rerun the switch to retry"
-    else
-      run ${pkgs.gh}/bin/gh extension install github/gh-stack || echo "gh-stack install failed, rerun the switch to retry"
-    fi
-  '';
-
   # herdr is not in nixpkgs; install it once, then `herdr update` keeps it current.
   home.activation.installHerdr = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -x "$HOME/.local/bin/herdr" ]; then
@@ -188,6 +179,18 @@ in
     mise=${config.programs.mise.package}/bin/mise
     export PATH="${lib.makeBinPath [ config.programs.mise.package pkgs.bash pkgs.coreutils pkgs.curl pkgs.git pkgs.gnutar pkgs.gzip pkgs.xz pkgs.unzip ]}:$PATH"
     if run "$mise" install node && run "$mise" exec node -- "$mise" install; then
+      run "$mise" upgrade github:modem-dev/hunk github:agavra/tuicr github:github/gh-stack || echo "Review tool upgrade failed, rerun the switch to retry"
+      for tool in hunk tuicr gh-stack; do
+        if binary=$("$mise" which "$tool"); then
+          if [ "$tool" = gh-stack ]; then
+            target="''${XDG_DATA_HOME:-$HOME/.local/share}/gh/extensions/gh-stack"
+          else
+            target="$HOME/.local/bin"
+          fi
+          run mkdir -p "$target"
+          run ln -sfn "$binary" "$target/$tool"
+        fi
+      done
       run "$mise" exec -- pi update --extensions || echo "Pi extension update failed, rerun ./rebuild.sh to retry"
     else
       echo "mise install failed, rerun ./rebuild.sh to retry"
