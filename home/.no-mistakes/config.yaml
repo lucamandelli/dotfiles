@@ -38,19 +38,16 @@ review_agents:
     fallback:
       - {agent: codex, model: gpt-6.1-sol, effort: high}
       - {agent: grok, model: grok-4.7, effort: high}
-  # Use a cheaper high-effort model for cold rereviews after the first round.
-  reviewer_after_round:
-    agent: claude
-    model: claude-sonnet-5-5
-    effort: high
-    after_round: 1
-    fallback:
-      - {agent: codex, model: gpt-6.1-sol, effort: high}
-      - {agent: grok, model: grok-4.7, effort: high}
   fixer:
     agent: claude
     model: claude-opus-5-5
     effort: medium
+  # Escalate fix effort after two rounds while keeping reviews at Opus high.
+  fixer_after_round:
+    agent: claude
+    model: claude-opus-5-5
+    effort: high
+    after_round: 2
 
 quota_routing:
   enabled: true
