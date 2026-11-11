@@ -34,13 +34,11 @@ let
     to-tickets = "${mp}/engineering/to-tickets";
     # addyosmani/agent-skills
     source-driven-development = "${addy}/source-driven-development";
-    gh-stack = ./skills/gh-stack;
     # The upstream CLI skills also provide annotate --gate for Codex and Grok.
     plannotator = "${inputs.plannotator}/apps/skills/core/plannotator";
     plannotator-annotate = "${inputs.plannotator}/apps/skills/core/plannotator-annotate";
     plannotator-last = "${inputs.plannotator}/apps/skills/core/plannotator-last";
     plannotator-review = "${inputs.plannotator}/apps/skills/core/plannotator-review";
-    hunk-review = ./skills/hunk-review;
     # cursor/plugins pstack
     create-verification-skill = "${pstack}/create-verification-skill";
     maintain-verification-skill = "${pstack}/maintain-verification-skill";

@@ -191,6 +191,7 @@ in
           run ln -sfn "$binary" "$target/$tool"
         fi
       done
+      run ${pkgs.python3}/bin/python3 ${./home/review-skills.py} "$mise"
       run "$mise" exec -- pi update --extensions || echo "Pi extension update failed, rerun ./rebuild.sh to retry"
     else
       echo "mise install failed, rerun ./rebuild.sh to retry"
