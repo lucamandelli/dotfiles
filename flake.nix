@@ -30,6 +30,7 @@
     addy-skills = { url = "github:addyosmani/agent-skills"; flake = false; };
     cursor-plugins = { url = "github:cursor/plugins"; flake = false; };
     gh-stack = { url = "github:github/gh-stack"; flake = false; };
+    plannotator = { url = "github:backnotprop/plannotator"; flake = false; };
   };
 
   outputs = inputs@{ self, nix-darwin, nix-homebrew, home-manager, nixpkgs, nixpkgs-linux, ... }:

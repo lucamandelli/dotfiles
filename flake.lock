@@ -317,6 +317,22 @@
         "type": "github"
       }
     },
+    "plannotator": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794419181,
+        "narHash": "sha256-aHhBtTp80h/CORYAuMFPgGPBzCwKGthrocnknfiYuEU=",
+        "owner": "backnotprop",
+        "repo": "plannotator",
+        "rev": "871cbbbf7afb7535e4d1cb1385196d2d486cd44d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "backnotprop",
+        "repo": "plannotator",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "addy-skills": "addy-skills",
@@ -329,6 +345,7 @@
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs",
         "nixpkgs-linux": "nixpkgs-linux",
+        "plannotator": "plannotator",
         "tuicr": "tuicr"
       }
     },
