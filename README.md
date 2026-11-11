@@ -44,15 +44,23 @@ See [firstmate.md](firstmate.md) for the isolated setup and machine sync.
 
 ## Global agent skills
 
-`home/skills.nix` links each skill into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Upstream sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` and `gh-stack` from their respective inputs (refreshed on rebuild). Personal skills live in `home/skills/<name>/` and are listed in the same set. The `no-mistakes` skill and Claude's `synced/` dir sit alongside, unmanaged by home-manager.
+`home/skills.nix` links each skill into `~/.agents/skills` (Pi, Codex, Grok) and `~/.claude/skills` (Claude Code, Grok). Upstream sources: `mattpocock-skills`, `addy-skills`, `cursor-plugins` and `plannotator` (`flake = false`, pinned in `flake.lock`), plus `hunk-review` and `gh-stack` from their respective inputs (refreshed on rebuild). Personal skills live in `home/skills/<name>/` and are listed in the same set. The `no-mistakes` skill and Claude's `synced/` dir sit alongside, unmanaged by home-manager.
 
 - Add an upstream skill: put `name = "${src}/path/to/skill-dir";` in the `skills` set (name must match the skill's `name:` and not collide). Link the whole dir, so bundled files travel. Check the skill has no `../` references to repo-level files, and add any skills it depends on. For a new source, add a `flake = false` input in `flake.nix`.
 - Add a personal skill: create `home/skills/<name>/` (self-contained, no `../` references) and add `name = ./skills/<name>;`. The directory name, the attr name, and `name:` must match.
 - Remove: delete its line. Home-manager removes the links on the next switch.
-- Update sources: `nix flake update mattpocock-skills addy-skills cursor-plugins`, review the `flake.lock` diff, `./rebuild.sh`.
+- Update sources: `nix flake update mattpocock-skills addy-skills cursor-plugins plannotator`, review the `flake.lock` diff, `./rebuild.sh`.
 - Dry check: `nix build .#homeConfigurations.linux.activationPackage` and `ls -l result/home-files/.agents/skills`.
 - Project-scoped skills do not belong here; commit them in the repo's `.agents/skills`.
 - `create-verification-skill` writes to `.cursor/skills/` by default; point it at `.agents/skills/` when invoking.
+
+## Native CLI workers
+
+Home-manager installs Claude Code and the standalone Plannotator binary if missing. It installs the official Claude Plannotator plugin, enables Codex's experimental Stop hook and merges the MCP servers from `home/.pi/agent/mcp.json` into Claude, Codex and Grok user settings. Other servers and Codex hooks are retained. The Playwright MCP server is headless. The CLIs own their mutable settings; rerun the switch after editing the shared MCP definitions. Log in to each provider on each machine.
+
+The shared Plannotator skills work in Codex and Grok. For an explicit approval gate, use `plannotator annotate <file> --gate --json` and read the returned decision and feedback. Claude's plugin provides its own interactive integration. The CLI blocks until feedback; the Claude interactive plugin can deliver it asynchronously. Codex Stop hooks are experimental. Grok has no upstream Plannotator plugin; use the CLI. In Grok, check `/privacy` and keep coding-data sharing opted out; this account-level choice is separate from telemetry and is not changed by the switch.
+
+Pi's Herdr session-label extension is Pi-specific and is not ported; native workers do not publish its model, effort or context label. Pi's other local extensions are transcript or footer UI.
 
 ## Pi transcript display
 

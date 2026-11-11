@@ -35,6 +35,11 @@ let
     # addyosmani/agent-skills
     source-driven-development = "${addy}/source-driven-development";
     gh-stack = "${inputs.gh-stack}/skills/gh-stack";
+    # The upstream CLI skills also provide annotate --gate for Codex and Grok.
+    plannotator = "${inputs.plannotator}/apps/skills/core/plannotator";
+    plannotator-annotate = "${inputs.plannotator}/apps/skills/core/plannotator-annotate";
+    plannotator-last = "${inputs.plannotator}/apps/skills/core/plannotator-last";
+    plannotator-review = "${inputs.plannotator}/apps/skills/core/plannotator-review";
     # Hunk's live review skill, from the same pinned source as the binary.
     hunk-review = "${inputs.hunk}/packages/hunk/skills/hunk-review";
     # cursor/plugins pstack

@@ -194,6 +194,24 @@ in
     fi
   '';
 
+  # Native workers share Pi's MCP server definitions. CLI-owned state is merged,
+  # not linked: Claude, Codex and Grok all update their own settings at runtime.
+  home.activation.configureNativeWorkers = lib.hm.dag.entryAfter [ "mergePiSettings" "mergeClaudeSettings" "installCodex" "installGrok" ] ''
+    export PATH="$HOME/.local/bin:$HOME/.grok/bin:${lib.makeBinPath [ pkgs.bash pkgs.coreutils pkgs.curl pkgs.git pkgs.gnutar pkgs.gzip pkgs.unzip ]}:$PATH"
+    if ! command -v claude >/dev/null 2>&1; then
+      run ${pkgs.bash}/bin/bash -o pipefail -c '${pkgs.curl}/bin/curl -fsSL https://claude.ai/install.sh | bash' \
+        || echo "Claude Code install failed, rerun the switch to retry"
+    fi
+    if [ ! -x "$HOME/.local/bin/plannotator" ]; then
+      run ${pkgs.bash}/bin/bash -o pipefail -c '${pkgs.curl}/bin/curl -fsSL https://plannotator.ai/install.sh | bash -s -- --minimal' \
+        || echo "Plannotator install failed, rerun the switch to retry"
+    fi
+    if command -v claude >/dev/null 2>&1 && command -v codex >/dev/null 2>&1 && command -v grok >/dev/null 2>&1; then
+      run ${config.programs.mise.package}/bin/mise exec -- ${pkgs.python3}/bin/python3 ${./home/native-worker-setup.py} ${./home/.pi/agent/mcp.json} \
+        || echo "Native worker configuration failed, rerun the switch to retry"
+    fi
+  '';
+
   # ~/.config/herdr used to link the whole dir; home-manager won't drop that link on its own
   # and would write config.toml's link through it into the repo, a symlink loop.
   home.activation.unlinkHerdrDir = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
