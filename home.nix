@@ -30,7 +30,10 @@ in
   ];
   fonts.fontconfig.enable = true;
   home.sessionVariables.EDITOR = "nvim";
-  home.sessionPath = [ "$HOME/.local/bin" "$HOME/.grok/bin" ];
+  # mise shims resolve node/bun/python per directory (.node-version etc.) for every shell without
+  # `mise activate`: non-interactive shells, coding agents, and the no-mistakes daemon, which freezes
+  # the PATH of a `$SHELL -ilc` run from $HOME at start. The same shims dir on the Mac.
+  home.sessionPath = [ "$HOME/.local/bin" "$HOME/.local/share/mise/shims" "$HOME/.grok/bin" ];
 
   programs.zsh = {
     enable = true;
@@ -45,6 +48,11 @@ in
     initContent = lib.mkMerge [
       (lib.mkOrder 550 ''
         fpath+=(~/.grok/completions/zsh)  # grok writes its completions here
+      '')
+      (lib.mkOrder 1500 ''
+        if [[ -t 1 ]]; then
+          eval "$(${config.programs.mise.package}/bin/mise activate zsh)"
+        fi
       '')
       ''
         zstyle ':completion:*' menu select  # Tab opens a navigable menu
@@ -88,7 +96,11 @@ in
   programs.starship.enable = true;
 
   # Node, Python, Bun and pi; versions live in home/.config/mise/config.toml.
+  # `mise activate` runs only in terminals (see programs.zsh.initContent): it prepends the global versions'
+  # bin dirs to PATH at startup, which a non-tty `zsh -ilc` (no-mistakes daemon, agent shell snapshots)
+  # would freeze ahead of the shims, so a project's pinned node never won.
   programs.mise.enable = true;
+  programs.mise.enableZshIntegration = false;
 
   # herdr is not in nixpkgs; install it once, then `herdr update` keeps it current.
   home.activation.installHerdr = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
