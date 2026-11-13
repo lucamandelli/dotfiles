@@ -31,6 +31,16 @@ in
   home.file.".config/herdr-app/mods/session-header".source = herdrApp "mods/session-header";
   home.file.".config/herdr-app/layouts/pi.json".source = herdrApp "layouts/pi.json";
 
+  # The no-mistakes daemon runs `$SHELL -ilc` once at start and freezes that PATH for every agent. The systemd
+  # user manager can inherit __HM_SESS_VARS_SOURCED from a login session, which makes the shell skip
+  # hm-session-vars.sh (so no mise shims on PATH). Unset the guards for the unit. The unit name is
+  # no-mistakes-daemon-<first 8 hex of sha256(root)> and no-mistakes rewrites the unit file itself, but a
+  # drop-in dir survives that. A daemon-reload and daemon restart apply this.
+  xdg.configFile."systemd/user/no-mistakes-daemon-${builtins.substring 0 8 (builtins.hashString "sha256" "${config.home.homeDirectory}/.no-mistakes")}.service.d/hm-session-vars.conf".text = ''
+    [Service]
+    UnsetEnvironment=__HM_SESS_VARS_SOURCED __HM_ZSH_SESS_VARS_SOURCED
+  '';
+
   # GNOME's "launch terminal" action goes through xdg-terminal-exec.
   xdg.configFile."xdg-terminals.list".text = ''
     com.mitchellh.ghostty.desktop
